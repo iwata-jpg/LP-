@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LP パフォーマンス分析ツール</title>
+<style>
+:root{--color-bg:#f5f5f5;--color-surface:#ffffff;--color-border:#e0e0e0;--color-border-light:#eeeeee;--color-text:#1a2e3b;--color-text-sub:#666;--color-text-muted:#999;--color-primary:#1e3a4f;--radius:8px;--radius-sm:4px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--color-bg);color:var(--color-text);font-size:14px;}
+.page{max-width:1200px;margin:0 auto;padding:24px 16px;}
+h1{font-size:18px;font-weight:700;color:var(--color-primary);margin-bottom:4px;}
+.subtitle{font-size:12px;color:var(--color-text-muted);margin-bottom:24px;}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
+@media(max-width:700px){.upload-grid{grid-template-columns:1fr;}}
+.upload-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px;}
+.upload-card h3{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.badge-g{background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:999px;font-size:11px;}
+.badge-y{background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:999px;font-size:11px;}
+.badge-m{background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:999px;font-size:11px;}
+.drop-mini{border:1.5px dashed var(--color-border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--color-text-muted);transition:background 0.15s;}
+.drop-mini:hover,.drop-mini.over{background:#f0f4ff;border-color:#4a90d9;}
+.drop-mini.loaded{border-color:#3B6D11;color:#3B6D11;background:#EAF3DE;}
+.paste-area{width:100%;min-height:90px;border:1.5px dashed var(--color-border);border-radius:var(--radius-sm);padding:8px;font-size:11px;font-family:monospace;color:var(--color-text);background:#fafafa;resize:vertical;}
+.paste-area:focus{outline:none;border-color:#4a90d9;}
+.mapping-box{border:1px solid var(--color-border-light);border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;background:#fafafa;}
+.mapping-box summary{font-size:11px;color:var(--color-text-muted);cursor:pointer;}
+.mapping-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+.mapping-row span{font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn{padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--color-border);font-size:13px;cursor:pointer;background:#fff;color:var(--color-text);transition:background 0.1s;}
+.btn:hover{background:#f5f5f5;}
+.btn-primary{background:var(--color-primary);color:#fff;border-color:var(--color-primary);}
+.btn-primary:hover{opacity:0.85;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-export{padding:5px 12px;font-size:12px;border-radius:var(--radius-sm);border:1px solid var(--color-border);cursor:pointer;background:#fff;color:var(--color-text);display:inline-flex;align-items:center;gap:5px;}
+.btn-export:hover{background:#f5f5f5;}
+.btn-export.copied{background:#EAF3DE;color:#3B6D11;border-color:#3B6D11;}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.section{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px;margin-top:12px;}
+.section h3{font-size:13px;font-weight:600;margin-bottom:6px;}
+.section p{font-size:11px;color:var(--color-text-muted);margin-bottom:10px;}
+.filter-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:26px;}
+.filter-tag{display:inline-flex;align-items:center;gap:6px;background:#f0f4ff;border:1px solid #c8d8f0;border-radius:999px;padding:3px 10px;font-size:11px;font-family:monospace;color:var(--color-primary);}
+.filter-tag button{background:none;border:none;cursor:pointer;color:#999;font-size:13px;line-height:1;padding:0;}
+.filter-tag button:hover{color:#c00;}
+.filter-input-row{display:flex;gap:8px;}
+.filter-input-row input{flex:1;font-size:12px;font-family:monospace;padding:5px 8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);}
+.export-btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.msg-ok{background:#EAF3DE;color:#3B6D11;border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;margin-top:6px;}
+.msg-err{background:#FCEBEB;color:#A32D2D;border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;margin-top:6px;white-space:pre-wrap;}
+.divider{height:1px;background:var(--color-border-light);margin:20px 0;}
+.lp-table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid #2a4a5e;margin-top:4px;}
+.lp-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+.lp-table thead tr{background:#1e3a4f;}
+.lp-table th{color:#e8f0f5;font-size:11px;font-weight:500;padding:10px 8px;text-align:center;border-right:1px solid #2d5068;white-space:nowrap;}
+.lp-table th:last-child{border-right:none;}
+.lp-table th.th-left{text-align:left;}
+.lp-table td{padding:9px 8px;border-bottom:1px solid #dde6ec;border-right:1px solid #dde6ec;text-align:center;vertical-align:middle;color:#1a2e3b;}
+.lp-table td:last-child{border-right:none;}
+.lp-table td.td-left{text-align:left;}
+.row-g{background:#f0f4ff;}.row-g-excl{background:#e6ecfa;}
+.row-y{background:#fff8f0;}.row-y-excl{background:#fef3e6;}
+.row-m{background:#fff0f3;}
+.row-total{background:#e8edf2;font-weight:600;}
+.row-total-excl{background:#dde4ec;font-weight:600;}
+.row-sep td{height:5px;background:#dce4ee;border:none;padding:0;}
+.lp-table tfoot tr{background:#1e3a4f;}
+.lp-table tfoot td{padding:10px 8px;border-right:1px solid #2d5068;color:#e8f0f5;font-weight:600;font-size:12px;text-align:center;border-bottom:1px solid #2d5068;}
+.lp-table tfoot td:last-child{border-right:none;}
+.lp-table tfoot tr.foot-g{background:#1a2f6e;}
+.lp-table tfoot tr.foot-y{background:#6e3a10;}
+.lp-table tfoot tr.foot-m{background:#6e1a2f;}
+.lp-table tfoot tr.foot-sep td{height:3px;background:#0d1f2d;padding:0;border:none;}
+.lp-table tfoot tr.foot-all{background:#1e3a4f;}
+.lp-table tfoot tr.foot-all-excl{background:#162f42;}
+.media-label{display:inline-block;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:500;white-space:nowrap;}
+.ml-g{background:#e8f0fe;color:#1a73e8;}.ml-y{background:#fff3e0;color:#c45000;}
+.ml-m{background:#fce4ec;color:#c62828;}.ml-total{background:#dce3ea;color:#1a2e3b;border:1px solid #bbb;}
+.ml-excl{background:#ddeaf7;color:#1a5fa8;margin-left:4px;}
+.tag-nodata{display:inline-block;font-size:10px;padding:1px 6px;border-radius:999px;background:#f0f0f0;color:#999;margin-left:4px;border:1px solid #ddd;}
+.cost-share{display:block;font-size:10px;color:#999;margin-top:3px;}
+.cost-share-bar{display:inline-block;height:3px;border-radius:2px;background:#4a90d9;margin-right:4px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>LP パフォーマンス分析ツール</h1>
+  <p class="subtitle">Google・Yahoo!・Meta 3媒体対応 / URL別集計 / エクスポート機能付き</p>
+  <div class="upload-grid">
+    <div class="upload-card">
+      <h3><span class="badge-g">Google</span> 広告</h3>
+      <div class="drop-mini" id="dz-g" onclick="document.getElementById('fi-g').click()" ondragover="dzo(event,'g')" ondragleave="dzl('g')" ondrop="dzd(event,'g')">クリックまたはD&amp;D</div>
+      <input type="file" id="fi-g" accept=".csv,.tsv,.txt" style="display:none" onchange="onFile(event,'g')">
+      <div id="msg-g"></div>
+    </div>
+    <div class="upload-card">
+      <h3><span class="badge-y">Yahoo!</span> 広告</h3>
+      <div class="drop-mini" id="dz-y" onclick="document.getElementById('fi-y').click()" ondragover="dzo(event,'y')" ondragleave="dzl('y')" ondrop="dzd(event,'y')">クリックまたはD&amp;D</div>
+      <input type="file" id="fi-y" accept=".csv,.tsv,.txt" style="display:none" onchange="onFile(event,'y')">
+      <div id="msg-y"></div>
+    </div>
+    <div class="upload-card">
+      <h3><span class="badge-m">Meta</span> 広告</h3>
+      <textarea class="paste-area" id="meta-paste" placeholder="Meta広告管理画面の表をそのまま貼り付け&#10;URLがない行は広告名から自動補完します"></textarea>
+      <div style="margin-top:6px;display:flex;gap:6px;">
+        <button class="btn btn-sm" onclick="parseMeta()">読み込む</button>
+        <button class="btn btn-sm" onclick="clearMeta()">クリア</button>
+      </div>
+      <details class="mapping-box">
+        <summary>広告名→URL 補完マッピング</summary>
+        <div id="mapping-list"></div>
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;">
+          <input type="text" id="map-kw" placeholder="キーワード" style="font-size:11px;font-family:monospace;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
+          <input type="text" id="map-url" placeholder="URL" style="font-size:11px;font-family:monospace;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
+          <button class="btn btn-sm" onclick="addMapping()">追加</button>
+        </div>
+      </details>
+      <div id="msg-m"></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" onclick="runAll()">分析する</button>
+    <button class="btn" onclick="resetAll()">全クリア</button>
+  </div>
+  <div class="section">
+    <h3>表示するLPを絞り込む（任意）</h3>
+    <p>/ad/price/ のみ Brand除く・指名除く行を追加。LP名の下に費用シェアを表示。</p>
+    <div class="filter-tags" id="filter-tags"></div>
+    <div class="filter-input-row">
+      <input type="text" id="filter-input" placeholder="/lpo/new-path" onkeydown="if(event.key==='Enter')addFilter()">
+      <button class="btn btn-sm" onclick="addFilter()">追加</button>
+      <button class="btn btn-sm" onclick="clearFilters()">全解除</button>
+    </div>
+  </div>
+  <div class="section" id="export-box" style="display:none;">
+    <h3>エクスポート</h3>
+    <p>ヘッダーなし・URL / 表示回数 / クリック数 / クリック率 / 費用 の5列・固定順・/ad/price/ はBrand・指名除く合計</p>
+    <div class="export-btn-row">
+      <button class="btn-export" id="btn-copy" onclick="copyToClipboard()">📋 クリップボードにコピー</button>
+      <button class="btn-export" onclick="downloadCSV()">⬇ CSVダウンロード</button>
+      <button class="btn-export" onclick="downloadTSV()">📊 Excel貼り付け用（TSV）</button>
+    </div>
+  </div>
+  <div id="results" style="display:none;"></div>
+</div>
+<script type="module">
+const SPLIT_PATH='/ad/price';
+const EXCL_KW={g:['brand'],y:['指名'],m:[]};
+let filterPaths=['/ad/price','/lpo/speed-up','/lpo/sales-full-commission','/lpo/ladies-sales','/lpo/legal-and-accounting','/lpo/statesman','/lpo/executive','/lpo/smart-casual','/lpo/dual'];
+const EXPORT_PATHS=['/lpo/sales-full-commission','/lpo/ladies-sales','/lpo/legal-and-accounting','/lpo/statesman','/lpo/executive','/lpo/smart-casual','/lpo/dual','/lpo/speed-up','/ad/price'];
+const store={g:null,y:null,m:null};
+let allRowsGlobal=[];
+let metaUrlMapping=[{kw:'legal',url:'https://www.ordersuit.info/lpo/legal-and-accounting/'},{kw:'dual',url:'https://www.ordersuit.info/lpo/dual/'},{kw:'speed-up',url:'https://www.ordersuit.info/lpo/speed-up/'},{kw:'フルコミ',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'sales-full-commission',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'statesman',url:'https://www.ordersuit.info/lpo/statesman/'},{kw:'executive',url:'https://www.ordersuit.info/lpo/executive/'},{kw:'smart-casual',url:'https://www.ordersuit.info/lpo/smart-casual/'},{kw:'ladies-sales',url:'https://www.ordersuit.info/lpo/ladies-sales/'},{kw:'ladies',url:'https://www.ordersuit.info/lpo/ladies-sales/'}];
+function guessMetaUrl(n){const l=n.toLowerCase();for(const m of metaUrlMapping){if(l.includes(m.kw.toLowerCase()))return m.url;}return null;}
+function renderMappingList(){document.getElementById('mapping-list').innerHTML=metaUrlMapping.map(m=>`<div class="mapping-row"><span>${m.kw}</span><span style="color:#666;">${m.url}</span></div>`).join('');}
+function addMapping(){const kw=document.getElementById('map-kw').value.trim(),url=document.getElementById('map-url').value.trim();if(!kw||!url)return;metaUrlMapping.unshift({kw,url});document.getElementById('map-kw').value='';document.getElementById('map-url').value='';renderMappingList();}
+function isNumericLine(s){return /^[¥￥,，\d\s\.]+$/.test(s.replace(/合計|件|広告/g,'').trim())&&s.trim().length>0;}
+function parseMeta(){const raw=document.getElementById('meta-paste').value;if(!raw.trim()){showMsg('m','err','テキストを貼り付けてください');return;}const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);const rows=[];let i=0;while(i<lines.length){const line=lines[i];if(line.startsWith('http')){const url=line;let name='';for(let j=i-1;j>=0;j--){if(!lines[j].startsWith('http')&&!isNumericLine(lines[j])){name=lines[j];break;}}const nums=[];for(let j=i+1;j<lines.length&&nums.length<3;j++){if(isNumericLine(lines[j]))nums.push(toNum(lines[j]));else if(lines[j].startsWith('http'))break;}const[imp=0,clicks=0,cost=0]=nums;if(imp>0||clicks>0||cost>0)rows.push({url:normalizeUrl(url),name,imp,clicks,cost,cv:0,campaign:'',media:'m'});i++;}else if(!isNumericLine(line)){const nums=[];let j=i+1;if(j<lines.length&&lines[j].startsWith('http')){i++;continue;}while(j<lines.length&&nums.length<3){if(isNumericLine(lines[j]))nums.push(toNum(lines[j]));else break;j++;}if(nums.length===3){const[imp,clicks,cost]=nums;if(imp>0||clicks>0||cost>0){const g=guessMetaUrl(line);if(g)rows.push({url:normalizeUrl(g),name:line,imp,clicks,cost,cv:0,campaign:'',media:'m'});}i=j;}else{i++;}}else{i++;}}if(!rows.length){showMsg('m','err','データを認識できませんでした');return;}store.m=rows;showMsg('m','ok',`${rows.length}件の広告を読み込みました`);}
+function clearMeta(){document.getElementById('meta-paste').value='';store.m=null;document.getElementById('msg-m').innerHTML='';}
+function parseCSVFull(text,sep){const rows=[];let row=[],field='',inQ=false,i=0;const n=text.length;while(i<n){const ch=text[i];if(inQ){if(ch==='"'){if(text[i+1]==='"'){field+='"';i+=2;continue;}inQ=false;i++;continue;}if(ch===sep||ch==='\t'||ch===','){field+=' ';i++;continue;}if(ch==='\n'||ch==='\r'){field+=' ';i++;continue;}field+=ch;i++;continue;}if(ch==='"'){inQ=true;i++;continue;}if(ch===sep){row.push(field.trim());field='';i++;continue;}if(ch==='\n'||(ch==='\r'&&text[i+1]==='\n')){row.push(field.trim());field='';if(row.some(c=>c!==''))rows.push(row);row=[];if(ch==='\r')i++;i++;continue;}if(ch==='\r'){row.push(field.trim());field='';if(row.some(c=>c!==''))rows.push(row);row=[];i++;continue;}field+=ch;i++;}if(field||row.length){row.push(field.trim());if(row.some(c=>c!==''))rows.push(row);}return rows;}
+function detectSep(s){return(s.match(/\t/g)||[]).length>=(s.match(/,/g)||[]).length?'\t':',';}
+function toNum(r){if(!r)return 0;return parseFloat(r.replace(/[,，\s¥￥円%％]/g,'').replace(/^--?$/,'0'))||0;}
+function normalizeUrl(url){try{const u=new URL(url.trim());let p=u.origin+u.pathname;if(!p.endsWith('/'))p+='/';return p;}catch(e){return url.trim();}}
+function decodeFile(buf){const a=new Uint8Array(buf.slice(0,4));if(a[0]===0xff&&a[1]===0xfe)return new TextDecoder('utf-16le').decode(buf);if(a[0]===0xfe&&a[1]===0xff)return new TextDecoder('utf-16be').decode(buf);const t=enc=>{try{return new TextDecoder(enc,{fatal:true}).decode(buf);}catch(e){return null;}};return t('utf-8')||t('shift-jis')||t('euc-jp')||'';}
+function guessKey(h){const k=h.trim().toLowerCase().replace(/\s+/g,'').replace(/[_\-（）()「」【】・　]/g,'');if(['url','最終url','finalurl','ランディングページ','ランディングページurl','ランディングページ最終url','リンク広告設定','lpurl'].includes(k))return'url';if(['表示回数','imp','impressions','インプレッション','インプレッション数','impr'].includes(k))return'imp';if(['クリック数','クリック','clicks','click','リンククリック'].includes(k))return'clicks';if(['費用','費用（円）','費用(円)','cost','spend','コスト','広告費','消化金額jpg','消化金額jpn','消化金額'].includes(k))return'cost';if(['コンバージョン数','cv数','cv','コンバージョン','conversions','conversion'].includes(k))return'cv';if(['キャンペーン','campaign','campaignname','キャンペーン名'].includes(k))return'campaign';if(['lp名','名前','name','広告グループ','adgroup','広告名'].includes(k))return'name';return null;}
+function findHeaderRow(rows){for(let i=0;i<Math.min(rows.length,10);i++){if(rows[i].filter(c=>guessKey(c)!==null).length>=2)return i;}return -1;}
+function dzo(e,m){e.preventDefault();document.getElementById('dz-'+m)?.classList.add('over');}
+function dzl(m){document.getElementById('dz-'+m)?.classList.remove('over');}
+function dzd(e,m){e.preventDefault();dzl(m);const f=e.dataTransfer.files[0];if(f)processFile(f,m);}
+function onFile(e,m){const f=e.target.files[0];if(f)processFile(f,m);}
+function processFile(file,media){const r=new FileReader();r.onload=e=>{const text=decodeFile(e.target.result);if(!text){showMsg(media,'err','読み込めませんでした');return;}const sep=detectSep(text.split('\n').slice(0,5).join('\n'));const allRows=parseCSVFull(text,sep);if(allRows.length<2){showMsg(media,'err','データが少なすぎます');return;}const hdrIdx=findHeaderRow(allRows);if(hdrIdx<0){showMsg(media,'err','列名を認識できませんでした');return;}const headers=allRows[hdrIdx];const keyMap=headers.map(guessKey);const rows=allRows.slice(hdrIdx+1).map(cells=>{const get=k=>{const idx=keyMap.indexOf(k);return idx>=0?(cells[idx]||''):'';}const rawUrl=get('url');return{url:rawUrl?normalizeUrl(rawUrl):'',name:get('name'),campaign:get('campaign'),imp:toNum(get('imp')),clicks:toNum(get('clicks')),cost:toNum(get('cost')),cv:toNum(get('cv')),media};}).filter(d=>d.url&&(d.imp||d.clicks||d.cost));if(!rows.length){showMsg(media,'err','有効なデータ行がありませんでした');return;}store[media]=rows;const dz=document.getElementById('dz-'+media);if(dz){dz.classList.add('loaded');dz.textContent=`✓ ${file.name}（${rows.length}行）`;}showMsg(media,'ok',`${file.name}（${rows.length}行）`);};r.readAsArrayBuffer(file);}
+function showMsg(m,t,msg){document.getElementById('msg-'+m).innerHTML=`<div class="msg-${t==='err'?'err':'ok'}">${msg}</div>`;}
+function resetAll(){['g','y'].forEach(m=>{store[m]=null;const dz=document.getElementById('dz-'+m);if(dz){dz.classList.remove('loaded','over');dz.textContent='クリックまたはD&D';}document.getElementById('msg-'+m).innerHTML='';document.getElementById('fi-'+m).value='';});store.m=null;allRowsGlobal=[];document.getElementById('meta-paste').value='';document.getElementById('msg-m').innerHTML='';document.getElementById('results').style.display='none';document.getElementById('export-box').style.display='none';}
+function renderFilterTags(){document.getElementById('filter-tags').innerHTML=filterPaths.map((p,i)=>`<span class="filter-tag">${p}<button onclick="removeFilter(${i})">×</button></span>`).join('');}
+function addFilter(){const inp=document.getElementById('filter-input');const v=inp.value.trim();if(v&&!filterPaths.includes(v))filterPaths.push(v);inp.value='';renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
+function removeFilter(i){filterPaths.splice(i,1);renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
+function clearFilters(){filterPaths=[];renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
+function isExcluded(row,media){const kws=EXCL_KW[media]||[];if(!kws.length)return false;const cam=(row.campaign||'').toLowerCase(),nam=(row.name||'').toLowerCase();return kws.some(kw=>cam.includes(kw)||nam.includes(kw));}
+function sumRows(rows){return rows.reduce((a,d)=>({imp:a.imp+d.imp,clicks:a.clicks+d.clicks,cost:a.cost+d.cost,cv:a.cv+d.cv}),{imp:0,clicks:0,cost:0,cv:0});}
+function calcDerived(d){return{...d,ctr:d.imp>0?d.clicks/d.imp*100:0,cvr:d.clicks>0?d.cv/d.clicks*100:0,cpa:d.cv>0?d.cost/d.cv:0};}
+function fmt(v,t){if(v===null||v===undefined||isNaN(v))return'—';if(t==='pct')return Math.floor(v*100)/100+'%';if(t==='yen')return'¥'+Math.floor(v).toLocaleString();if(t==='num')return Math.floor(v).toLocaleString();return v;}
+function pathShort(url){try{return new URL(url).pathname;}catch(e){return url;}}
+const ML={g:'<span class="media-label ml-g">Google</span>',y:'<span class="media-label ml-y">Yahoo!</span>',m:'<span class="media-label ml-m">Meta</span>',tot:'<span class="media-label ml-total">合計</span>'};
+const EXCL_TAG={g:'<span class="media-label ml-excl">Brand除く</span>',y:'<span class="media-label ml-excl">指名除く</span>'};
+const ROW_CLS={g:'row-g','g-excl':'row-g-excl',y:'row-y','y-excl':'row-y-excl',m:'row-m',tot:'row-total','tot-excl':'row-total-excl'};
+function getExclLabel(hm){const el=[];if(hm.g&&EXCL_KW.g.length)el.push('Brand');if(hm.y&&EXCL_KW.y.length)el.push('指名');return el.length?`<span class="media-label ml-excl">${el.join('・')}除く</span>`:'';}
+function runAll(){
+  const hasAny=Object.values(store).some(v=>v);if(!hasAny){alert('少なくとも1つのデータを読み込んでください');return;}
+  allRowsGlobal=[...(store.g||[]),...(store.y||[]),...(store.m||[])];
+  const hasCv=allRowsGlobal.some(d=>d.cv>0);
+  const paths=filterPaths.length>0?filterPaths:[...new Set(allRowsGlobal.map(d=>d.url))];
+  const hasMedia={g:!!store.g,y:!!store.y,m:!!store.m};
+  const exclLabel=getExclLabel(hasMedia);
+  const colSpan=hasCv?8:5;
+  const filteredRows=paths.flatMap(p=>allRowsGlobal.filter(d=>d.url.includes(p)));
+  const grandTotalCost=filteredRows.reduce((s,d)=>s+d.cost,0);
+  let bodyHtml='';
+  paths.forEach((p,pi)=>{
+    const isSplit=p.includes(SPLIT_PATH);const matchedAll=allRowsGlobal.filter(d=>d.url.includes(p));
+    if(pi>0)bodyHtml+=`<tr class="row-sep"><td colspan="${colSpan}"></td></tr>`;
+    const lpPath=pathShort(matchedAll.length>0?matchedAll[0].url:p);
+    const lpCost=matchedAll.reduce((s,d)=>s+d.cost,0);
+    const shareVal=grandTotalCost>0?lpCost/grandTotalCost*100:0;
+    const sharePct=Math.floor(shareVal*10)/10;const barW=Math.min(Math.round(shareVal),100);
+    const shareBadge=`<div class="cost-share"><span class="cost-share-bar" style="width:${barW}px;max-width:60px;"></span>費用シェア ${sharePct}%</div>`;
+    const rowDefs=[];
+    if(isSplit){if(hasMedia.g){rowDefs.push({media:'g',excl:false});rowDefs.push({media:'g',excl:true});}if(hasMedia.y){rowDefs.push({media:'y',excl:false});rowDefs.push({media:'y',excl:true});}if(hasMedia.m)rowDefs.push({media:'m',excl:false});rowDefs.push({media:'tot',excl:false});rowDefs.push({media:'tot',excl:true});}
+    else{if(hasMedia.g)rowDefs.push({media:'g',excl:false});if(hasMedia.y)rowDefs.push({media:'y',excl:false});if(hasMedia.m)rowDefs.push({media:'m',excl:false});rowDefs.push({media:'tot',excl:false});}
+    rowDefs.forEach((def,ri)=>{
+      const{media,excl}=def;const isTotal=(media==='tot');
+      let src=isTotal?matchedAll:matchedAll.filter(d=>d.media===media);
+      if(excl)src=isTotal?src.filter(d=>!isExcluded(d,d.media)):src.filter(d=>!isExcluded(d,media));
+      const nodata=!isTotal&&src.length===0&&matchedAll.filter(d=>d.media===media).length===0;
+      const s=calcDerived(sumRows(src));const clsKey=isTotal?(excl?'tot-excl':'tot'):(excl?`${media}-excl`:media);
+      let label=isTotal?ML.tot:(ML[media]||'');if(excl&&!isTotal)label+=EXCL_TAG[media]||'';if(excl&&isTotal)label+=exclLabel;
+      const lpTd=ri===0?`<td class="td-left" rowspan="${rowDefs.length}" style="vertical-align:middle;font-weight:600;font-size:12px;border-right:1px solid #dde6ec;">${lpPath}${shareBadge}</td>`:'';
+      const nd=nodata;const noCV=media==='m'&&!isTotal;
+      bodyHtml+=`<tr class="${ROW_CLS[clsKey]||''}">${lpTd}<td class="td-left" style="white-space:nowrap;">${label}${nd?'<span class="tag-nodata">データなし</span>':''}</td><td>${nd?'—':fmt(s.imp,'num')}</td><td>${nd?'—':fmt(s.clicks,'num')}</td><td>${nd?'—':fmt(s.ctr,'pct')}</td><td>${nd?'—':fmt(s.cost,'yen')}</td>${hasCv?`<td>${(nd||noCV)?'—':fmt(s.cv,'num')}</td><td>${(nd||noCV)?'—':fmt(s.cvr,'pct')}</td><td>${(nd||noCV)?'—':fmt(s.cpa,'yen')}</td>`:''}</tr>`;
+    });
+  });
+  function mSum(m,e){let r=filteredRows.filter(d=>d.media===m);if(e)r=r.filter(d=>!isExcluded(d,m));return calcDerived(sumRows(r));}
+  function tSum(e){let r=filteredRows;if(e)r=r.filter(d=>!isExcluded(d,d.media));return calcDerived(sumRows(r));}
+  function fRow(cls,lbl,s,noCV=false){return`<tr class="${cls}"><td class="td-left" colspan="2" style="text-align:left;font-size:11px;">${lbl}</td><td>${fmt(s.imp,'num')}</td><td>${fmt(s.clicks,'num')}</td><td>${fmt(s.ctr,'pct')}</td><td>${fmt(s.cost,'yen')}</td>${hasCv?`<td>${noCV?'—':fmt(s.cv,'num')}</td><td>${noCV?'—':fmt(s.cvr,'pct')}</td><td>${noCV?'—':fmt(s.cpa,'yen')}</td>`:''}</tr>`;}
+  let foot='<tfoot>';
+  if(hasMedia.g){foot+=fRow('foot-g',`${ML.g} 合計（全キャンペーン）`,mSum('g',false));foot+=fRow('foot-g',`${ML.g}${EXCL_TAG.g} 合計`,mSum('g',true));}
+  if(hasMedia.y){foot+=fRow('foot-y',`${ML.y} 合計（全キャンペーン）`,mSum('y',false));foot+=fRow('foot-y',`${ML.y}${EXCL_TAG.y} 合計`,mSum('y',true));}
+  if(hasMedia.m){foot+=fRow('foot-m',`${ML.m} 合計`,mSum('m',false),true);}
+  foot+=`<tr class="foot-sep"><td colspan="${colSpan}"></td></tr>`;
+  foot+=fRow('foot-all',`${ML.tot} 全媒体合計（全キャンペーン・${paths.length}LP）`,tSum(false));
+  foot+=fRow('foot-all-excl',`${ML.tot}${exclLabel} 全媒体合計（${paths.length}LP）`,tSum(true));
+  foot+='</tfoot>';
+  document.getElementById('results').innerHTML=`<div class="divider"></div><div class="lp-table-wrap"><table class="lp-table"><thead><tr><th class="th-left">LP</th><th class="th-left">媒体</th><th>表示回数</th><th>クリック数</th><th>クリック率</th><th>費用</th>${hasCv?'<th>CV数</th><th>CV率</th><th>CV単価</th>':''}</tr></thead><tbody>${bodyHtml}</tbody>${foot}</table></div>`;
+  document.getElementById('results').style.display='block';
+  document.getElementById('export-box').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function buildTSV(){const lines=[];EXPORT_PATHS.forEach(p=>{const matched=allRowsGlobal.filter(d=>d.url.includes(p));const isSplit=p.includes(SPLIT_PATH);let src=isSplit?matched.filter(d=>!isExcluded(d,d.media)):matched;const s=calcDerived(sumRows(src));const url=matched.length>0?matched[0].url:p;lines.push([url,Math.floor(s.imp)||0,Math.floor(s.clicks)||0,Math.floor(s.ctr*100)/100+'%',Math.floor(s.cost)||0].join('\t'));});return lines.join('\n');}
+function buildCSV(){return buildTSV().split('\n').map(line=>line.split('\t').map(cell=>String(cell).includes(',')?`"${cell}"`:cell).join(',')).join('\n');}
+function copyToClipboard(){const tsv=buildTSV();const done=()=>{const btn=document.getElementById('btn-copy');btn.classList.add('copied');btn.textContent='✓ コピーしました';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 クリップボードにコピー';},2000);};navigator.clipboard.writeText(tsv).then(done).catch(()=>{const ta=document.createElement('textarea');ta.value=tsv;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();});}
+function downloadCSV(){const blob=new Blob(['\uFEFF'+buildCSV()],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lp_report.csv';a.click();}
+function downloadTSV(){const blob=new Blob(['\uFEFF'+buildTSV()],{type:'text/tab-separated-values;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lp_report.tsv';a.click();}
+renderFilterTags();
+renderMappingList();
+
+// グローバルに公開（onclick属性から呼び出せるように）
+window.parseMeta=parseMeta;window.clearMeta=clearMeta;window.addMapping=addMapping;
+window.onFile=onFile;window.dzo=dzo;window.dzl=dzl;window.dzd=dzd;
+window.runAll=runAll;window.resetAll=resetAll;
+window.addFilter=addFilter;window.removeFilter=removeFilter;window.clearFilters=clearFilters;
+window.copyToClipboard=copyToClipboard;window.downloadCSV=downloadCSV;window.downloadTSV=downloadTSV;
+</script>
+</body>
+</html>
