@@ -3,251 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LP パフォーマンス分析ツール</title>
+<title>SADA LP広告パフォーマンス分析ツール v23</title>
 <style>
-:root{--color-bg:#f5f5f5;--color-surface:#ffffff;--color-border:#e0e0e0;--color-border-light:#eeeeee;--color-text:#1a2e3b;--color-text-sub:#666;--color-text-muted:#999;--color-primary:#1e3a4f;--radius:8px;--radius-sm:4px;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--color-bg);color:var(--color-text);font-size:14px;}
-.page{max-width:1200px;margin:0 auto;padding:24px 16px;}
-h1{font-size:18px;font-weight:700;color:var(--color-primary);margin-bottom:4px;}
-.subtitle{font-size:12px;color:var(--color-text-muted);margin-bottom:24px;}
-.upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;}
-@media(max-width:700px){.upload-grid{grid-template-columns:1fr;}}
-.upload-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px;}
-.upload-card h3{font-size:12px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.badge-g{background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:999px;font-size:11px;}
-.badge-y{background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:999px;font-size:11px;}
-.badge-m{background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:999px;font-size:11px;}
-.drop-mini{border:1.5px dashed var(--color-border);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--color-text-muted);transition:background 0.15s;}
-.drop-mini:hover,.drop-mini.over{background:#f0f4ff;border-color:#4a90d9;}
-.drop-mini.loaded{border-color:#3B6D11;color:#3B6D11;background:#EAF3DE;}
-.paste-area{width:100%;min-height:90px;border:1.5px dashed var(--color-border);border-radius:var(--radius-sm);padding:8px;font-size:11px;font-family:monospace;color:var(--color-text);background:#fafafa;resize:vertical;}
-.paste-area:focus{outline:none;border-color:#4a90d9;}
-.mapping-box{border:1px solid var(--color-border-light);border-radius:var(--radius-sm);padding:10px 12px;margin-top:8px;background:#fafafa;}
-.mapping-box summary{font-size:11px;color:var(--color-text-muted);cursor:pointer;}
-.mapping-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
-.mapping-row span{font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.btn{padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--color-border);font-size:13px;cursor:pointer;background:#fff;color:var(--color-text);transition:background 0.1s;}
-.btn:hover{background:#f5f5f5;}
-.btn-primary{background:var(--color-primary);color:#fff;border-color:var(--color-primary);}
-.btn-primary:hover{opacity:0.85;}
-.btn-sm{padding:4px 10px;font-size:12px;}
-.btn-export{padding:5px 12px;font-size:12px;border-radius:var(--radius-sm);border:1px solid var(--color-border);cursor:pointer;background:#fff;color:var(--color-text);display:inline-flex;align-items:center;gap:5px;}
-.btn-export:hover{background:#f5f5f5;}
-.btn-export.copied{background:#EAF3DE;color:#3B6D11;border-color:#3B6D11;}
-.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
-.section{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px;margin-top:12px;}
-.section h3{font-size:13px;font-weight:600;margin-bottom:6px;}
-.section p{font-size:11px;color:var(--color-text-muted);margin-bottom:10px;}
-.filter-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:26px;}
-.filter-tag{display:inline-flex;align-items:center;gap:6px;background:#f0f4ff;border:1px solid #c8d8f0;border-radius:999px;padding:3px 10px;font-size:11px;font-family:monospace;color:var(--color-primary);}
-.filter-tag button{background:none;border:none;cursor:pointer;color:#999;font-size:13px;line-height:1;padding:0;}
-.filter-tag button:hover{color:#c00;}
-.filter-input-row{display:flex;gap:8px;}
-.filter-input-row input{flex:1;font-size:12px;font-family:monospace;padding:5px 8px;border:1px solid var(--color-border);border-radius:var(--radius-sm);}
-.export-btn-row{display:flex;gap:8px;flex-wrap:wrap;}
-.msg-ok{background:#EAF3DE;color:#3B6D11;border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;margin-top:6px;}
-.msg-err{background:#FCEBEB;color:#A32D2D;border-radius:var(--radius-sm);padding:6px 10px;font-size:11px;margin-top:6px;white-space:pre-wrap;}
-.divider{height:1px;background:var(--color-border-light);margin:20px 0;}
-.lp-table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid #2a4a5e;margin-top:4px;}
-.lp-table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
-.lp-table thead tr{background:#1e3a4f;}
-.lp-table th{color:#e8f0f5;font-size:11px;font-weight:500;padding:10px 8px;text-align:center;border-right:1px solid #2d5068;white-space:nowrap;}
-.lp-table th:last-child{border-right:none;}
-.lp-table th.th-left{text-align:left;}
-.lp-table td{padding:9px 8px;border-bottom:1px solid #dde6ec;border-right:1px solid #dde6ec;text-align:center;vertical-align:middle;color:#1a2e3b;}
-.lp-table td:last-child{border-right:none;}
-.lp-table td.td-left{text-align:left;}
-.row-g{background:#f0f4ff;}.row-g-excl{background:#e6ecfa;}
-.row-y{background:#fff8f0;}.row-y-excl{background:#fef3e6;}
-.row-m{background:#fff0f3;}
-.row-total{background:#e8edf2;font-weight:600;}
-.row-total-excl{background:#dde4ec;font-weight:600;}
-.row-sep td{height:5px;background:#dce4ee;border:none;padding:0;}
-.lp-table tfoot tr{background:#1e3a4f;}
-.lp-table tfoot td{padding:10px 8px;border-right:1px solid #2d5068;color:#e8f0f5;font-weight:600;font-size:12px;text-align:center;border-bottom:1px solid #2d5068;}
-.lp-table tfoot td:last-child{border-right:none;}
-.lp-table tfoot tr.foot-g{background:#1a2f6e;}
-.lp-table tfoot tr.foot-y{background:#6e3a10;}
-.lp-table tfoot tr.foot-m{background:#6e1a2f;}
-.lp-table tfoot tr.foot-sep td{height:3px;background:#0d1f2d;padding:0;border:none;}
-.lp-table tfoot tr.foot-all{background:#1e3a4f;}
-.lp-table tfoot tr.foot-all-excl{background:#162f42;}
-.media-label{display:inline-block;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:500;white-space:nowrap;}
-.ml-g{background:#e8f0fe;color:#1a73e8;}.ml-y{background:#fff3e0;color:#c45000;}
-.ml-m{background:#fce4ec;color:#c62828;}.ml-total{background:#dce3ea;color:#1a2e3b;border:1px solid #bbb;}
-.ml-excl{background:#ddeaf7;color:#1a5fa8;margin-left:4px;}
-.tag-nodata{display:inline-block;font-size:10px;padding:1px 6px;border-radius:999px;background:#f0f0f0;color:#999;margin-left:4px;border:1px solid #ddd;}
-.cost-share{display:block;font-size:10px;color:#999;margin-top:3px;}
-.cost-share-bar{display:inline-block;height:3px;border-radius:2px;background:#4a90d9;margin-right:4px;vertical-align:middle;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f9;color:#1a2e3b;padding:1.5rem;}
+.wrap{max-width:1400px;margin:0 auto;}
+h1{font-size:16px;font-weight:600;margin-bottom:1rem;color:#1e3a4f;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+.card{background:#fff;border:1px solid #dde6ec;border-radius:10px;padding:1rem;}
+.card h3{font-size:12px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ga4-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.card-ga4{background:#fff;border:1px solid #b8860b;border-radius:10px;padding:1rem;}
+.card-ga4-sess{background:#fff;border:1px solid #2d6a2d;border-radius:10px;padding:1rem;}
+.card-ga4 h3,.card-ga4-sess h3{font-size:12px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.bg{background:#e8f0fe;color:#1a73e8;padding:2px 8px;border-radius:999px;font-size:11px;}
+.by{background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:999px;font-size:11px;}
+.byd{background:#ffe8cc;color:#b34700;padding:2px 8px;border-radius:999px;font-size:11px;}
+.bm{background:#fce4ec;color:#c62828;padding:2px 8px;border-radius:999px;font-size:11px;}
+.dz{border:1.5px dashed #b0bec5;border-radius:8px;padding:14px;text-align:center;cursor:pointer;font-size:12px;color:#78909c;transition:background 0.15s;}
+.dz:hover,.dz.over{background:#f5f7fa;}
+.dz.loaded{border-color:#3B6D11;color:#3B6D11;background:#EAF3DE;}
+.ta{width:100%;min-height:90px;border:1.5px dashed #b0bec5;border-radius:8px;padding:8px;font-size:11px;font-family:monospace;background:#f5f7fa;resize:vertical;}
+.ta:focus{outline:none;border-color:#78909c;}
+.mpbox{border:1px solid #dde6ec;border-radius:8px;padding:10px 12px;margin-top:8px;}
+.mpbox summary{font-size:11px;color:#78909c;cursor:pointer;}
+.mprow{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+.mprow span{font-size:11px;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn{padding:6px 14px;border-radius:8px;border:1px solid #b0bec5;font-size:13px;cursor:pointer;background:#fff;color:#1a2e3b;}
+.btn:hover{background:#f5f7fa;}
+.btnp{background:#1e3a4f;color:#fff;border-color:#1e3a4f;}
+.btnp:hover{opacity:0.88;}
+.btns{padding:4px 10px;font-size:12px;}
+.btne{padding:5px 12px;font-size:12px;border-radius:8px;border:1px solid #b0bec5;cursor:pointer;background:#fff;color:#1a2e3b;display:inline-flex;align-items:center;gap:5px;}
+.btne:hover{background:#f5f7fa;}
+.btne.copied{background:#EAF3DE;color:#3B6D11;border-color:#3B6D11;}
+.btne.gs{background:#1a73e8;color:#fff;border-color:#1a73e8;}
+.btne.gs:hover{opacity:0.88;}
+.btne.loading{opacity:0.6;cursor:not-allowed;}
+.acts{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.sec{background:#fff;border:1px solid #dde6ec;border-radius:10px;padding:1rem;margin-top:10px;}
+.sec h3{font-size:13px;font-weight:500;margin-bottom:6px;}
+.sec p{font-size:11px;color:#78909c;margin-bottom:10px;}
+.ftags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:26px;}
+.ftag{display:inline-flex;align-items:center;gap:6px;background:#f5f7fa;border:1px solid #dde6ec;border-radius:999px;padding:3px 10px;font-size:11px;font-family:monospace;}
+.ftag button{background:none;border:none;cursor:pointer;color:#90a4ae;font-size:13px;line-height:1;padding:0;}
+.ftag button:hover{color:#c62828;}
+.finrow{display:flex;gap:8px;}
+.finrow input{flex:1;font-size:12px;font-family:monospace;border:1px solid #b0bec5;border-radius:6px;padding:5px 8px;}
+.erow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.ok{background:#EAF3DE;color:#3B6D11;border-radius:8px;padding:6px 10px;font-size:11px;margin-top:6px;}
+.er{background:#FCEBEB;color:#A32D2D;border-radius:8px;padding:6px 10px;font-size:11px;margin-top:6px;}
+.divider{height:1px;background:#dde6ec;margin:1.25rem 0;}
+.tw{overflow-x:auto;border-radius:10px;border:1px solid #2a4a5e;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:950px;}
+thead tr{background:#1e3a4f;}
+th{color:#e8f0f5;font-size:11px;font-weight:500;padding:10px 8px;text-align:center;border-right:1px solid #2d5068;white-space:nowrap;}
+th:last-child{border-right:none;}
+.thl{text-align:left;}
+td{padding:9px 8px;border-bottom:1px solid #dde6ec;border-right:1px solid #dde6ec;text-align:center;vertical-align:middle;}
+td:last-child{border-right:none;}
+.tdl{text-align:left;}
+.rg{background:#f0f4ff;}.rge{background:#e6ecfa;}
+.ry{background:#fff8f0;}.rye{background:#fef3e6;}
+.ryd{background:#fff3e6;}.rm{background:#fff0f3;}
+.rt{background:#e8edf2;font-weight:600;}.rte{background:#dde4ec;font-weight:600;}
+.rs{background:#eaf0fb;font-weight:600;}.rd{background:#fce8f0;font-weight:600;}
+.rsep td{height:5px;background:#dce4ee;border:none;padding:0;}
+tfoot tr{background:#1e3a4f;}
+tfoot td{padding:10px 8px;border-right:1px solid #2d5068;color:#e8f0f5;font-weight:600;font-size:12px;text-align:center;border-bottom:1px solid #2d5068;}
+tfoot td:last-child{border-right:none;}
+tfoot tr.fg{background:#1a2f6e;}tfoot tr.fy{background:#6e3a10;}
+tfoot tr.fyd{background:#7a4010;}tfoot tr.fm{background:#6e1a2f;}
+tfoot tr.fsep td{height:3px;background:#0d1f2d;padding:0;border:none;}
+tfoot tr.fa{background:#1e3a4f;}tfoot tr.fae{background:#162f42;}
+.ml{display:inline-block;font-size:10px;padding:1px 7px;border-radius:999px;font-weight:500;white-space:nowrap;}
+.mlg{background:#e8f0fe;color:#1a73e8;}.mly{background:#fff3e0;color:#c45000;}
+.mlyd{background:#ffe8cc;color:#8a3800;}.mlm{background:#fce4ec;color:#c62828;}
+.mlt{background:#dce3ea;color:#1a2e3b;border:1px solid #bbb;}
+.mls{background:#dce8fe;color:#1a4a9e;border:1px solid #a8c0f0;}
+.mld{background:#fce8f4;color:#9e1a5a;border:1px solid #f0a8d0;}
+.mle{background:#ddeaf7;color:#1a5fa8;margin-left:4px;}
+.nd{display:inline-block;font-size:10px;padding:1px 6px;border-radius:999px;background:#f0f0f0;color:#999;margin-left:4px;border:1px solid #ddd;}
+.cs{display:block;font-size:10px;color:#78909c;margin-top:3px;}
+.csb{display:inline-block;height:3px;border-radius:2px;background:#4a90d9;margin-right:4px;vertical-align:middle;}
+.gs-link{font-size:11px;color:#1a73e8;text-decoration:underline;margin-left:8px;}
 </style>
 </head>
 <body>
-<div class="page">
-  <h1>LP パフォーマンス分析ツール</h1>
-  <p class="subtitle">Google・Yahoo!・Meta 3媒体対応 / URL別集計 / エクスポート機能付き</p>
-  <div class="upload-grid">
-    <div class="upload-card">
-      <h3><span class="badge-g">Google</span> 広告</h3>
-      <div class="drop-mini" id="dz-g" onclick="document.getElementById('fi-g').click()" ondragover="dzo(event,'g')" ondragleave="dzl('g')" ondrop="dzd(event,'g')">クリックまたはD&amp;D</div>
-      <input type="file" id="fi-g" accept=".csv,.tsv,.txt" style="display:none" onchange="onFile(event,'g')">
-      <div id="msg-g"></div>
-    </div>
-    <div class="upload-card">
-      <h3><span class="badge-y">Yahoo!</span> 広告</h3>
-      <div class="drop-mini" id="dz-y" onclick="document.getElementById('fi-y').click()" ondragover="dzo(event,'y')" ondragleave="dzl('y')" ondrop="dzd(event,'y')">クリックまたはD&amp;D</div>
-      <input type="file" id="fi-y" accept=".csv,.tsv,.txt" style="display:none" onchange="onFile(event,'y')">
-      <div id="msg-y"></div>
-    </div>
-    <div class="upload-card">
-      <h3><span class="badge-m">Meta</span> 広告</h3>
-      <textarea class="paste-area" id="meta-paste" placeholder="Meta広告管理画面の表をそのまま貼り付け&#10;URLがない行は広告名から自動補完します"></textarea>
-      <div style="margin-top:6px;display:flex;gap:6px;">
-        <button class="btn btn-sm" onclick="parseMeta()">読み込む</button>
-        <button class="btn btn-sm" onclick="clearMeta()">クリア</button>
-      </div>
-      <details class="mapping-box">
-        <summary>広告名→URL 補完マッピング</summary>
-        <div id="mapping-list"></div>
-        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;">
-          <input type="text" id="map-kw" placeholder="キーワード" style="font-size:11px;font-family:monospace;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
-          <input type="text" id="map-url" placeholder="URL" style="font-size:11px;font-family:monospace;padding:4px 6px;border:1px solid #ddd;border-radius:4px;">
-          <button class="btn btn-sm" onclick="addMapping()">追加</button>
-        </div>
-      </details>
-      <div id="msg-m"></div>
-    </div>
-  </div>
-  <div class="actions">
-    <button class="btn btn-primary" onclick="runAll()">分析する</button>
-    <button class="btn" onclick="resetAll()">全クリア</button>
-  </div>
-  <div class="section">
-    <h3>表示するLPを絞り込む（任意）</h3>
-    <p>/ad/price/ のみ Brand除く・指名除く行を追加。LP名の下に費用シェアを表示。</p>
-    <div class="filter-tags" id="filter-tags"></div>
-    <div class="filter-input-row">
-      <input type="text" id="filter-input" placeholder="/lpo/new-path" onkeydown="if(event.key==='Enter')addFilter()">
-      <button class="btn btn-sm" onclick="addFilter()">追加</button>
-      <button class="btn btn-sm" onclick="clearFilters()">全解除</button>
-    </div>
-  </div>
-  <div class="section" id="export-box" style="display:none;">
-    <h3>エクスポート</h3>
-    <p>ヘッダーなし・URL / 表示回数 / クリック数 / クリック率 / 費用 の5列・固定順・/ad/price/ はBrand・指名除く合計</p>
-    <div class="export-btn-row">
-      <button class="btn-export" id="btn-copy" onclick="copyToClipboard()">📋 クリップボードにコピー</button>
-      <button class="btn-export" onclick="downloadCSV()">⬇ CSVダウンロード</button>
-      <button class="btn-export" onclick="downloadTSV()">📊 Excel貼り付け用（TSV）</button>
-    </div>
-  </div>
-  <div id="results" style="display:none;"></div>
+<div class="wrap">
+<h1>SADA LP広告パフォーマンス分析ツール v23</h1>
+<div class="grid4">
+  <div class="card"><h3><span class="bg">Google</span> 広告</h3><div class="dz" id="dzg" onclick="document.getElementById('fig').click()" ondragover="DZO(event,'g')" ondragleave="DZL('g')" ondrop="DZD(event,'g')">クリックまたはD&amp;D</div><input type="file" id="fig" accept=".csv,.tsv,.txt" style="display:none" onchange="FILE(event,'g')"><div id="mg"></div></div>
+  <div class="card"><h3><span class="by">Yahoo!</span> サーチ</h3><div class="dz" id="dzy" onclick="document.getElementById('fiy').click()" ondragover="DZO(event,'y')" ondragleave="DZL('y')" ondrop="DZD(event,'y')">クリックまたはD&amp;D</div><input type="file" id="fiy" accept=".csv,.tsv,.txt" style="display:none" onchange="FILE(event,'y')"><div id="my"></div></div>
+  <div class="card"><h3><span class="byd">Yahoo!</span> ディスプレイ</h3><div class="dz" id="dzyd" onclick="document.getElementById('fiyd').click()" ondragover="DZO(event,'yd')" ondragleave="DZL('yd')" ondrop="DZD(event,'yd')">クリックまたはD&amp;D</div><input type="file" id="fiyd" accept=".csv,.tsv,.txt" style="display:none" onchange="FILE(event,'yd')"><div id="myd"></div></div>
+  <div class="card"><h3><span class="bm">Meta</span> 広告</h3><textarea class="ta" id="mta" placeholder="Meta広告管理画面をそのまま貼り付け"></textarea><div style="margin-top:6px;display:flex;gap:6px;"><button class="btn btns" onclick="PMETA()">読み込む</button><button class="btn btns" onclick="CMETA()">クリア</button></div><details class="mpbox"><summary>広告名→URL 補完マッピング</summary><div id="mplist"></div><div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;"><input type="text" id="mpkw" placeholder="キーワード" style="font-size:11px;font-family:monospace;border:1px solid #b0bec5;border-radius:6px;padding:4px 6px;"><input type="text" id="mpurl" placeholder="URL" style="font-size:11px;font-family:monospace;border:1px solid #b0bec5;border-radius:6px;padding:4px 6px;"><button class="btn btns" onclick="ADDMP()">追加</button></div></details><div id="mm"></div></div>
 </div>
-<script type="module">
-const SPLIT_PATH='/ad/price';
-const EXCL_KW={g:['brand'],y:['指名'],m:[]};
-let filterPaths=['/ad/price','/lpo/speed-up','/lpo/sales-full-commission','/lpo/ladies-sales','/lpo/legal-and-accounting','/lpo/statesman','/lpo/executive','/lpo/smart-casual','/lpo/dual'];
-const EXPORT_PATHS=['/lpo/sales-full-commission','/lpo/ladies-sales','/lpo/legal-and-accounting','/lpo/statesman','/lpo/executive','/lpo/smart-casual','/lpo/dual','/lpo/speed-up','/ad/price'];
-const store={g:null,y:null,m:null};
-let allRowsGlobal=[];
-let metaUrlMapping=[{kw:'legal',url:'https://www.ordersuit.info/lpo/legal-and-accounting/'},{kw:'dual',url:'https://www.ordersuit.info/lpo/dual/'},{kw:'speed-up',url:'https://www.ordersuit.info/lpo/speed-up/'},{kw:'フルコミ',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'sales-full-commission',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'statesman',url:'https://www.ordersuit.info/lpo/statesman/'},{kw:'executive',url:'https://www.ordersuit.info/lpo/executive/'},{kw:'smart-casual',url:'https://www.ordersuit.info/lpo/smart-casual/'},{kw:'ladies-sales',url:'https://www.ordersuit.info/lpo/ladies-sales/'},{kw:'ladies',url:'https://www.ordersuit.info/lpo/ladies-sales/'}];
-function guessMetaUrl(n){const l=n.toLowerCase();for(const m of metaUrlMapping){if(l.includes(m.kw.toLowerCase()))return m.url;}return null;}
-function renderMappingList(){document.getElementById('mapping-list').innerHTML=metaUrlMapping.map(m=>`<div class="mapping-row"><span>${m.kw}</span><span style="color:#666;">${m.url}</span></div>`).join('');}
-function addMapping(){const kw=document.getElementById('map-kw').value.trim(),url=document.getElementById('map-url').value.trim();if(!kw||!url)return;metaUrlMapping.unshift({kw,url});document.getElementById('map-kw').value='';document.getElementById('map-url').value='';renderMappingList();}
-function isNumericLine(s){return /^[¥￥,，\d\s\.]+$/.test(s.replace(/合計|件|広告/g,'').trim())&&s.trim().length>0;}
-function parseMeta(){const raw=document.getElementById('meta-paste').value;if(!raw.trim()){showMsg('m','err','テキストを貼り付けてください');return;}const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);const rows=[];let i=0;while(i<lines.length){const line=lines[i];if(line.startsWith('http')){const url=line;let name='';for(let j=i-1;j>=0;j--){if(!lines[j].startsWith('http')&&!isNumericLine(lines[j])){name=lines[j];break;}}const nums=[];for(let j=i+1;j<lines.length&&nums.length<3;j++){if(isNumericLine(lines[j]))nums.push(toNum(lines[j]));else if(lines[j].startsWith('http'))break;}const[imp=0,clicks=0,cost=0]=nums;if(imp>0||clicks>0||cost>0)rows.push({url:normalizeUrl(url),name,imp,clicks,cost,cv:0,campaign:'',media:'m'});i++;}else if(!isNumericLine(line)){const nums=[];let j=i+1;if(j<lines.length&&lines[j].startsWith('http')){i++;continue;}while(j<lines.length&&nums.length<3){if(isNumericLine(lines[j]))nums.push(toNum(lines[j]));else break;j++;}if(nums.length===3){const[imp,clicks,cost]=nums;if(imp>0||clicks>0||cost>0){const g=guessMetaUrl(line);if(g)rows.push({url:normalizeUrl(g),name:line,imp,clicks,cost,cv:0,campaign:'',media:'m'});}i=j;}else{i++;}}else{i++;}}if(!rows.length){showMsg('m','err','データを認識できませんでした');return;}store.m=rows;showMsg('m','ok',`${rows.length}件の広告を読み込みました`);}
-function clearMeta(){document.getElementById('meta-paste').value='';store.m=null;document.getElementById('msg-m').innerHTML='';}
-function parseCSVFull(text,sep){const rows=[];let row=[],field='',inQ=false,i=0;const n=text.length;while(i<n){const ch=text[i];if(inQ){if(ch==='"'){if(text[i+1]==='"'){field+='"';i+=2;continue;}inQ=false;i++;continue;}if(ch===sep||ch==='\t'||ch===','){field+=' ';i++;continue;}if(ch==='\n'||ch==='\r'){field+=' ';i++;continue;}field+=ch;i++;continue;}if(ch==='"'){inQ=true;i++;continue;}if(ch===sep){row.push(field.trim());field='';i++;continue;}if(ch==='\n'||(ch==='\r'&&text[i+1]==='\n')){row.push(field.trim());field='';if(row.some(c=>c!==''))rows.push(row);row=[];if(ch==='\r')i++;i++;continue;}if(ch==='\r'){row.push(field.trim());field='';if(row.some(c=>c!==''))rows.push(row);row=[];i++;continue;}field+=ch;i++;}if(field||row.length){row.push(field.trim());if(row.some(c=>c!==''))rows.push(row);}return rows;}
-function detectSep(s){return(s.match(/\t/g)||[]).length>=(s.match(/,/g)||[]).length?'\t':',';}
-function toNum(r){if(!r)return 0;return parseFloat(r.replace(/[,，\s¥￥円%％]/g,'').replace(/^--?$/,'0'))||0;}
-function normalizeUrl(url){try{const u=new URL(url.trim());let p=u.origin+u.pathname;if(!p.endsWith('/'))p+='/';return p;}catch(e){return url.trim();}}
-function decodeFile(buf){const a=new Uint8Array(buf.slice(0,4));if(a[0]===0xff&&a[1]===0xfe)return new TextDecoder('utf-16le').decode(buf);if(a[0]===0xfe&&a[1]===0xff)return new TextDecoder('utf-16be').decode(buf);const t=enc=>{try{return new TextDecoder(enc,{fatal:true}).decode(buf);}catch(e){return null;}};return t('utf-8')||t('shift-jis')||t('euc-jp')||'';}
-function guessKey(h){const k=h.trim().toLowerCase().replace(/\s+/g,'').replace(/[_\-（）()「」【】・　]/g,'');if(['url','最終url','finalurl','ランディングページ','ランディングページurl','ランディングページ最終url','リンク広告設定','lpurl'].includes(k))return'url';if(['表示回数','imp','impressions','インプレッション','インプレッション数','impr'].includes(k))return'imp';if(['クリック数','クリック','clicks','click','リンククリック'].includes(k))return'clicks';if(['費用','費用（円）','費用(円)','cost','spend','コスト','広告費','消化金額jpg','消化金額jpn','消化金額'].includes(k))return'cost';if(['コンバージョン数','cv数','cv','コンバージョン','conversions','conversion'].includes(k))return'cv';if(['キャンペーン','campaign','campaignname','キャンペーン名'].includes(k))return'campaign';if(['lp名','名前','name','広告グループ','adgroup','広告名'].includes(k))return'name';return null;}
-function findHeaderRow(rows){for(let i=0;i<Math.min(rows.length,10);i++){if(rows[i].filter(c=>guessKey(c)!==null).length>=2)return i;}return -1;}
-function dzo(e,m){e.preventDefault();document.getElementById('dz-'+m)?.classList.add('over');}
-function dzl(m){document.getElementById('dz-'+m)?.classList.remove('over');}
-function dzd(e,m){e.preventDefault();dzl(m);const f=e.dataTransfer.files[0];if(f)processFile(f,m);}
-function onFile(e,m){const f=e.target.files[0];if(f)processFile(f,m);}
-function processFile(file,media){const r=new FileReader();r.onload=e=>{const text=decodeFile(e.target.result);if(!text){showMsg(media,'err','読み込めませんでした');return;}const sep=detectSep(text.split('\n').slice(0,5).join('\n'));const allRows=parseCSVFull(text,sep);if(allRows.length<2){showMsg(media,'err','データが少なすぎます');return;}const hdrIdx=findHeaderRow(allRows);if(hdrIdx<0){showMsg(media,'err','列名を認識できませんでした');return;}const headers=allRows[hdrIdx];const keyMap=headers.map(guessKey);const rows=allRows.slice(hdrIdx+1).map(cells=>{const get=k=>{const idx=keyMap.indexOf(k);return idx>=0?(cells[idx]||''):'';}const rawUrl=get('url');return{url:rawUrl?normalizeUrl(rawUrl):'',name:get('name'),campaign:get('campaign'),imp:toNum(get('imp')),clicks:toNum(get('clicks')),cost:toNum(get('cost')),cv:toNum(get('cv')),media};}).filter(d=>d.url&&(d.imp||d.clicks||d.cost));if(!rows.length){showMsg(media,'err','有効なデータ行がありませんでした');return;}store[media]=rows;const dz=document.getElementById('dz-'+media);if(dz){dz.classList.add('loaded');dz.textContent=`✓ ${file.name}（${rows.length}行）`;}showMsg(media,'ok',`${file.name}（${rows.length}行）`);};r.readAsArrayBuffer(file);}
-function showMsg(m,t,msg){document.getElementById('msg-'+m).innerHTML=`<div class="msg-${t==='err'?'err':'ok'}">${msg}</div>`;}
-function resetAll(){['g','y'].forEach(m=>{store[m]=null;const dz=document.getElementById('dz-'+m);if(dz){dz.classList.remove('loaded','over');dz.textContent='クリックまたはD&D';}document.getElementById('msg-'+m).innerHTML='';document.getElementById('fi-'+m).value='';});store.m=null;allRowsGlobal=[];document.getElementById('meta-paste').value='';document.getElementById('msg-m').innerHTML='';document.getElementById('results').style.display='none';document.getElementById('export-box').style.display='none';}
-function renderFilterTags(){document.getElementById('filter-tags').innerHTML=filterPaths.map((p,i)=>`<span class="filter-tag">${p}<button onclick="removeFilter(${i})">×</button></span>`).join('');}
-function addFilter(){const inp=document.getElementById('filter-input');const v=inp.value.trim();if(v&&!filterPaths.includes(v))filterPaths.push(v);inp.value='';renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
-function removeFilter(i){filterPaths.splice(i,1);renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
-function clearFilters(){filterPaths=[];renderFilterTags();if(Object.values(store).some(v=>v))runAll();}
-function isExcluded(row,media){const kws=EXCL_KW[media]||[];if(!kws.length)return false;const cam=(row.campaign||'').toLowerCase(),nam=(row.name||'').toLowerCase();return kws.some(kw=>cam.includes(kw)||nam.includes(kw));}
-function sumRows(rows){return rows.reduce((a,d)=>({imp:a.imp+d.imp,clicks:a.clicks+d.clicks,cost:a.cost+d.cost,cv:a.cv+d.cv}),{imp:0,clicks:0,cost:0,cv:0});}
-function calcDerived(d){return{...d,ctr:d.imp>0?d.clicks/d.imp*100:0,cvr:d.clicks>0?d.cv/d.clicks*100:0,cpa:d.cv>0?d.cost/d.cv:0};}
-function fmt(v,t){if(v===null||v===undefined||isNaN(v))return'—';if(t==='pct')return Math.floor(v*100)/100+'%';if(t==='yen')return'¥'+Math.floor(v).toLocaleString();if(t==='num')return Math.floor(v).toLocaleString();return v;}
-function pathShort(url){try{return new URL(url).pathname;}catch(e){return url;}}
-const ML={g:'<span class="media-label ml-g">Google</span>',y:'<span class="media-label ml-y">Yahoo!</span>',m:'<span class="media-label ml-m">Meta</span>',tot:'<span class="media-label ml-total">合計</span>'};
-const EXCL_TAG={g:'<span class="media-label ml-excl">Brand除く</span>',y:'<span class="media-label ml-excl">指名除く</span>'};
-const ROW_CLS={g:'row-g','g-excl':'row-g-excl',y:'row-y','y-excl':'row-y-excl',m:'row-m',tot:'row-total','tot-excl':'row-total-excl'};
-function getExclLabel(hm){const el=[];if(hm.g&&EXCL_KW.g.length)el.push('Brand');if(hm.y&&EXCL_KW.y.length)el.push('指名');return el.length?`<span class="media-label ml-excl">${el.join('・')}除く</span>`:'';}
-function runAll(){
-  const hasAny=Object.values(store).some(v=>v);if(!hasAny){alert('少なくとも1つのデータを読み込んでください');return;}
-  allRowsGlobal=[...(store.g||[]),...(store.y||[]),...(store.m||[])];
-  const hasCv=allRowsGlobal.some(d=>d.cv>0);
-  const paths=filterPaths.length>0?filterPaths:[...new Set(allRowsGlobal.map(d=>d.url))];
-  const hasMedia={g:!!store.g,y:!!store.y,m:!!store.m};
-  const exclLabel=getExclLabel(hasMedia);
-  const colSpan=hasCv?8:5;
-  const filteredRows=paths.flatMap(p=>allRowsGlobal.filter(d=>d.url.includes(p)));
-  const grandTotalCost=filteredRows.reduce((s,d)=>s+d.cost,0);
-  let bodyHtml='';
-  paths.forEach((p,pi)=>{
-    const isSplit=p.includes(SPLIT_PATH);const matchedAll=allRowsGlobal.filter(d=>d.url.includes(p));
-    if(pi>0)bodyHtml+=`<tr class="row-sep"><td colspan="${colSpan}"></td></tr>`;
-    const lpPath=pathShort(matchedAll.length>0?matchedAll[0].url:p);
-    const lpCost=matchedAll.reduce((s,d)=>s+d.cost,0);
-    const shareVal=grandTotalCost>0?lpCost/grandTotalCost*100:0;
-    const sharePct=Math.floor(shareVal*10)/10;const barW=Math.min(Math.round(shareVal),100);
-    const shareBadge=`<div class="cost-share"><span class="cost-share-bar" style="width:${barW}px;max-width:60px;"></span>費用シェア ${sharePct}%</div>`;
-    const rowDefs=[];
-    if(isSplit){if(hasMedia.g){rowDefs.push({media:'g',excl:false});rowDefs.push({media:'g',excl:true});}if(hasMedia.y){rowDefs.push({media:'y',excl:false});rowDefs.push({media:'y',excl:true});}if(hasMedia.m)rowDefs.push({media:'m',excl:false});rowDefs.push({media:'tot',excl:false});rowDefs.push({media:'tot',excl:true});}
-    else{if(hasMedia.g)rowDefs.push({media:'g',excl:false});if(hasMedia.y)rowDefs.push({media:'y',excl:false});if(hasMedia.m)rowDefs.push({media:'m',excl:false});rowDefs.push({media:'tot',excl:false});}
-    rowDefs.forEach((def,ri)=>{
-      const{media,excl}=def;const isTotal=(media==='tot');
-      let src=isTotal?matchedAll:matchedAll.filter(d=>d.media===media);
-      if(excl)src=isTotal?src.filter(d=>!isExcluded(d,d.media)):src.filter(d=>!isExcluded(d,media));
-      const nodata=!isTotal&&src.length===0&&matchedAll.filter(d=>d.media===media).length===0;
-      const s=calcDerived(sumRows(src));const clsKey=isTotal?(excl?'tot-excl':'tot'):(excl?`${media}-excl`:media);
-      let label=isTotal?ML.tot:(ML[media]||'');if(excl&&!isTotal)label+=EXCL_TAG[media]||'';if(excl&&isTotal)label+=exclLabel;
-      const lpTd=ri===0?`<td class="td-left" rowspan="${rowDefs.length}" style="vertical-align:middle;font-weight:600;font-size:12px;border-right:1px solid #dde6ec;">${lpPath}${shareBadge}</td>`:'';
-      const nd=nodata;const noCV=media==='m'&&!isTotal;
-      bodyHtml+=`<tr class="${ROW_CLS[clsKey]||''}">${lpTd}<td class="td-left" style="white-space:nowrap;">${label}${nd?'<span class="tag-nodata">データなし</span>':''}</td><td>${nd?'—':fmt(s.imp,'num')}</td><td>${nd?'—':fmt(s.clicks,'num')}</td><td>${nd?'—':fmt(s.ctr,'pct')}</td><td>${nd?'—':fmt(s.cost,'yen')}</td>${hasCv?`<td>${(nd||noCV)?'—':fmt(s.cv,'num')}</td><td>${(nd||noCV)?'—':fmt(s.cvr,'pct')}</td><td>${(nd||noCV)?'—':fmt(s.cpa,'yen')}</td>`:''}</tr>`;
-    });
-  });
-  function mSum(m,e){let r=filteredRows.filter(d=>d.media===m);if(e)r=r.filter(d=>!isExcluded(d,m));return calcDerived(sumRows(r));}
-  function tSum(e){let r=filteredRows;if(e)r=r.filter(d=>!isExcluded(d,d.media));return calcDerived(sumRows(r));}
-  function fRow(cls,lbl,s,noCV=false){return`<tr class="${cls}"><td class="td-left" colspan="2" style="text-align:left;font-size:11px;">${lbl}</td><td>${fmt(s.imp,'num')}</td><td>${fmt(s.clicks,'num')}</td><td>${fmt(s.ctr,'pct')}</td><td>${fmt(s.cost,'yen')}</td>${hasCv?`<td>${noCV?'—':fmt(s.cv,'num')}</td><td>${noCV?'—':fmt(s.cvr,'pct')}</td><td>${noCV?'—':fmt(s.cpa,'yen')}</td>`:''}</tr>`;}
-  let foot='<tfoot>';
-  if(hasMedia.g){foot+=fRow('foot-g',`${ML.g} 合計（全キャンペーン）`,mSum('g',false));foot+=fRow('foot-g',`${ML.g}${EXCL_TAG.g} 合計`,mSum('g',true));}
-  if(hasMedia.y){foot+=fRow('foot-y',`${ML.y} 合計（全キャンペーン）`,mSum('y',false));foot+=fRow('foot-y',`${ML.y}${EXCL_TAG.y} 合計`,mSum('y',true));}
-  if(hasMedia.m){foot+=fRow('foot-m',`${ML.m} 合計`,mSum('m',false),true);}
-  foot+=`<tr class="foot-sep"><td colspan="${colSpan}"></td></tr>`;
-  foot+=fRow('foot-all',`${ML.tot} 全媒体合計（全キャンペーン・${paths.length}LP）`,tSum(false));
-  foot+=fRow('foot-all-excl',`${ML.tot}${exclLabel} 全媒体合計（${paths.length}LP）`,tSum(true));
-  foot+='</tfoot>';
-  document.getElementById('results').innerHTML=`<div class="divider"></div><div class="lp-table-wrap"><table class="lp-table"><thead><tr><th class="th-left">LP</th><th class="th-left">媒体</th><th>表示回数</th><th>クリック数</th><th>クリック率</th><th>費用</th>${hasCv?'<th>CV数</th><th>CV率</th><th>CV単価</th>':''}</tr></thead><tbody>${bodyHtml}</tbody>${foot}</table></div>`;
-  document.getElementById('results').style.display='block';
-  document.getElementById('export-box').style.display='block';
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-function buildTSV(){const lines=[];EXPORT_PATHS.forEach(p=>{const matched=allRowsGlobal.filter(d=>d.url.includes(p));const isSplit=p.includes(SPLIT_PATH);let src=isSplit?matched.filter(d=>!isExcluded(d,d.media)):matched;const s=calcDerived(sumRows(src));const url=matched.length>0?matched[0].url:p;lines.push([url,Math.floor(s.imp)||0,Math.floor(s.clicks)||0,Math.floor(s.ctr*100)/100+'%',Math.floor(s.cost)||0].join('\t'));});return lines.join('\n');}
-function buildCSV(){return buildTSV().split('\n').map(line=>line.split('\t').map(cell=>String(cell).includes(',')?`"${cell}"`:cell).join(',')).join('\n');}
-function copyToClipboard(){const tsv=buildTSV();const done=()=>{const btn=document.getElementById('btn-copy');btn.classList.add('copied');btn.textContent='✓ コピーしました';setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 クリップボードにコピー';},2000);};navigator.clipboard.writeText(tsv).then(done).catch(()=>{const ta=document.createElement('textarea');ta.value=tsv;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);done();});}
-function downloadCSV(){const blob=new Blob(['\uFEFF'+buildCSV()],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lp_report.csv';a.click();}
-function downloadTSV(){const blob=new Blob(['\uFEFF'+buildTSV()],{type:'text/tab-separated-values;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lp_report.tsv';a.click();}
-renderFilterTags();
-renderMappingList();
-
-// グローバルに公開（onclick属性から呼び出せるように）
-window.parseMeta=parseMeta;window.clearMeta=clearMeta;window.addMapping=addMapping;
-window.onFile=onFile;window.dzo=dzo;window.dzl=dzl;window.dzd=dzd;
-window.runAll=runAll;window.resetAll=resetAll;
-window.addFilter=addFilter;window.removeFilter=removeFilter;window.clearFilters=clearFilters;
-window.copyToClipboard=copyToClipboard;window.downloadCSV=downloadCSV;window.downloadTSV=downloadTSV;
+<div class="ga4-row">
+  <div class="card-ga4"><h3><span style="background:#fff8e0;color:#8a6000;padding:2px 8px;border-radius:999px;font-size:11px;">GA4</span> コンバージョンデータ（任意）</h3><div style="font-size:11px;color:#78909c;margin-bottom:8px;">LP別・媒体別CV数のCSVをアップロード</div><div class="dz" id="dzga4" onclick="document.getElementById('figa4').click()" ondragover="DZO(event,'ga4')" ondragleave="DZL('ga4')" ondrop="DZD(event,'ga4')">クリックまたはD&amp;D（GA4 CV数CSV）</div><input type="file" id="figa4" accept=".csv,.tsv,.txt" style="display:none" onchange="FILE(event,'ga4')"><div id="mga4"></div></div>
+  <div class="card-ga4-sess"><h3><span style="background:#e8f4e8;color:#2d6a2d;padding:2px 8px;border-radius:999px;font-size:11px;">GA4</span> セッション数（任意）</h3><div style="font-size:11px;color:#78909c;margin-bottom:8px;">クリック数の右横に表示。CV率の分母にも使用されます</div><div class="dz" id="dzses" onclick="document.getElementById('fises').click()" ondragover="DZO(event,'ses')" ondragleave="DZL('ses')" ondrop="DZD(event,'ses')">クリックまたはD&amp;D（GA4 セッション数CSV）</div><input type="file" id="fises" accept=".csv,.tsv,.txt" style="display:none" onchange="FILE(event,'ses')"><div id="mses"></div></div>
+</div>
+<div class="acts"><button class="btn btnp" onclick="RUN()">分析する</button><button class="btn" onclick="RESET()">全クリア</button></div>
+<div class="sec"><h3>表示するLPを絞り込む（任意）</h3><p>/ad/price/ のみ Brand除く・指名除く行を追加。列順：表示回数→クリック数→セッション数→クリック率→費用→CV数→CV率→CPA</p><div class="ftags" id="ftags"></div><div class="finrow"><input type="text" id="fin" placeholder="/lpo/new-path" onkeydown="if(event.key==='Enter')ADDF()"><button class="btn btns" onclick="ADDF()">追加</button><button class="btn btns" onclick="CLRF()">全解除</button></div></div>
+<div class="sec" id="exbox" style="display:none;"><h3>エクスポート</h3><div class="erow" style="margin-bottom:8px;"><span style="font-size:11px;color:#78909c;">表全体：</span><button class="btne" id="btn-table-copy" onclick="copyFullTable()">テーブル全体をコピー</button><button class="btne gs" id="btn-gs" onclick="saveToSheets()">Google Sheetsに保存</button><span id="gs-status"></span></div><div class="erow"><span style="font-size:11px;color:#78909c;">LP合計（クリック順）：</span><button class="btne" id="bcopy" onclick="COPY()">クリップボードにコピー</button><button class="btne" onclick="DLCSV()">CSV</button><button class="btne" onclick="DLTSV()">TSV</button></div></div>
+<div id="res" style="display:none;"></div>
+</div>
+<script>
+var SPLIT='/ad/price';
+var EXKW={g:['brand'],y:['指名'],yd:[],m:[]};
+var FP=['/ad/price','/lpo/speed-up','/lpo/sales-full-commission','/lpo/ladies-sales','/lpo/legal-and-accounting','/lpo/statesman','/lpo/executive','/lpo/smart-casual','/lpo/dual','/lpo/campaign-2026-07','/lpo/trial','/lpo/price'];
+var ST={g:null,y:null,yd:null,m:null};
+var GA4DATA={};var SESSDATA={};var AR=[];var TABLEROWS=[];var TABLE_HAS_CV=false;
+var MP=[{kw:'legal',url:'https://www.ordersuit.info/lpo/legal-and-accounting/'},{kw:'dual',url:'https://www.ordersuit.info/lpo/dual/'},{kw:'speed-up',url:'https://www.ordersuit.info/lpo/speed-up/'},{kw:'フルコミ',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'full-commission',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'sales-full-commission',url:'https://www.ordersuit.info/lpo/sales-full-commission/'},{kw:'statesman',url:'https://www.ordersuit.info/lpo/statesman/'},{kw:'executive',url:'https://www.ordersuit.info/lpo/executive/'},{kw:'smart-casual',url:'https://www.ordersuit.info/lpo/smart-casual/'},{kw:'ladies-sales',url:'https://www.ordersuit.info/lpo/ladies-sales/'},{kw:'ladies',url:'https://www.ordersuit.info/lpo/ladies-sales/'},{kw:'campaign-2026-07',url:'https://www.ordersuit.info/lpo/campaign-2026-07/'},{kw:'trial',url:'https://www.ordersuit.info/lpo/trial/'},{kw:'price',url:'https://www.ordersuit.info/lpo/price/'}];
+function parseGA4CSV(text){var lines=text.split('\n').map(function(l){return l.trim();});var result={};var colMap={};var dataStart=false;for(var i=0;i<lines.length;i++){var line=lines[i];if(!line||line.charAt(0)==='#')continue;if(!dataStart&&(line.toLowerCase().indexOf('google')>=0||line.indexOf('セッション')>=0||line.indexOf('イベント')>=0)){var cols=line.split(',');for(var c=0;c<cols.length;c++){var h=cols[c].toLowerCase().replace(/\s/g,'').replace(/\//g,'');if(h.indexOf('googlecpc')>=0)colMap[c]='g';else if(h.indexOf('metadisplay')>=0||h==='meta')colMap[c]='m';else if(h.indexOf('yahoodisplay')>=0)colMap[c]='yd';else if(h.indexOf('yahoocpc')>=0)colMap[c]='y';else if(h.indexOf('合計')>=0)colMap[c]='total';}if(lines[i+1]&&(lines[i+1].indexOf('イベント')>=0||lines[i+1].indexOf('セッション')>=0))i++;dataStart=true;continue;}if(!dataStart)continue;var cols=line.split(',');var lpPath=cols[0].trim();if(!lpPath||lpPath.indexOf('総計')>=0)continue;var normPath=lpPath.replace(/\/$/,'');if(!normPath||normPath.indexOf('/')<0)continue;var entry={g:0,y:0,m:0,yd:0,total:0};for(var c in colMap){var val=parseInt((cols[c]||'0').replace(/[^0-9]/g,''))||0;entry[colMap[c]]+=val;}if(result[normPath]){for(var k in entry)result[normPath][k]+=entry[k];}else result[normPath]=entry;}return result;}
+function getGA4Val(data,fp,media){if(!Object.keys(data).length)return null;var f=fp.replace(/\/$/,'');if(data[f])return data[f][media]||0;for(var k in data){if(f.indexOf(k)>=0||k.indexOf(f)>=0)return data[k][media]||0;}return 0;}
+function getCV(p,m){return getGA4Val(GA4DATA,p,m);}
+function getSess(p,m){return getGA4Val(SESSDATA,p,m);}
+function isFBUrl(u){return u.indexOf('facebook.com')>=0||u.indexOf('adsmanager')>=0||u.indexOf('fb.com')>=0;}
+function isSkipLine(s){var skip=['urlパラメーター','列をカスタマイズ','すべての広告','配信済み','アクティブな広告','アクション','キャンペーン','広告セット','インプレッション(広告)','絞り込み検索','オフ/オン','リンク(広告設定)','インプレッション','リンククリック','消化金額','更新済み','オーダースーツ'];var k=s.trim().toLowerCase();for(var i=0;i<skip.length;i++){if(k.indexOf(skip[i])>=0)return true;}if(/^\[.*\]\(/.test(s.trim()))return true;return false;}
+function gMU(n){var l=n.toLowerCase();for(var i=0;i<MP.length;i++){if(l.indexOf(MP[i].kw.toLowerCase())>=0)return MP[i].url;}return null;}
+function RML(){document.getElementById('mplist').innerHTML=MP.map(function(m){return '<div class="mprow"><span>'+m.kw+'</span><span style="color:#78909c;">'+m.url+'</span></div>';}).join('');}
+function ADDMP(){var kw=document.getElementById('mpkw').value.trim(),url=document.getElementById('mpurl').value.trim();if(!kw||!url)return;MP.unshift({kw:kw,url:url});document.getElementById('mpkw').value='';document.getElementById('mpurl').value='';RML();}
+function isNum(s){var c=s.replace(/合計|件|広告|消化金額/g,'').trim();if(!c)return false;return /^[¥￥,，\d\s\.]+$/.test(c);}
+function PMETA(){var raw=document.getElementById('mta').value;if(!raw.trim()){MSG('m','er','テキストを貼り付けてください');return;}var lines=raw.split('\n').map(function(l){return l.trim();}).filter(function(l){if(!l)return false;if(isSkipLine(l))return false;if(isFBUrl(l))return false;if(/^\[.*\]\(/.test(l))return false;return true;});var rows=[];var i=0;while(i<lines.length){var line=lines[i];if(line.indexOf('http')===0&&!isFBUrl(line)){var url=line;var name='';for(var j=i-1;j>=0;j--){if(lines[j].indexOf('http')!==0&&!isNum(lines[j])&&!isSkipLine(lines[j])){name=lines[j];break;}}var nums=[];for(var j=i+1;j<lines.length&&nums.length<3;j++){if(isNum(lines[j]))nums.push(TN(lines[j]));else if(lines[j].indexOf('http')===0&&!isFBUrl(lines[j]))break;}var imp=nums[0]||0,clicks=nums[1]||0,cost=nums[2]||0;if(imp>0||clicks>0||cost>0)rows.push({url:NU(url),name:name,imp:imp,clicks:clicks,cost:cost,cv:0,campaign:'',media:'m'});i++;}else if(!isNum(line)&&line.indexOf('http')!==0){var j=i+1;if(j<lines.length&&lines[j].indexOf('http')===0&&!isFBUrl(lines[j])){i++;continue;}var nums=[];var k=i+1;while(k<lines.length&&nums.length<3){if(isNum(lines[k]))nums.push(TN(lines[k]));else break;k++;}if(nums.length===3){var imp=nums[0],clicks=nums[1],cost=nums[2];if(imp>0||clicks>0||cost>0){var g=gMU(line);if(g)rows.push({url:NU(g),name:line,imp:imp,clicks:clicks,cost:cost,cv:0,campaign:'',media:'m'});}i=k;}else{i++;}}else{i++;}}if(!rows.length){MSG('m','er','データを認識できませんでした');return;}ST.m=rows;MSG('m','ok',rows.length+'件の広告を読み込みました');}
+function CMETA(){document.getElementById('mta').value='';ST.m=null;document.getElementById('mm').innerHTML='';}
+function parseCSV(text,sep){var rows=[];var row=[];var field='';var inQ=false;var i=0;var n=text.length;while(i<n){var ch=text[i];if(inQ){if(ch==='"'){if(text[i+1]==='"'){field+='"';i+=2;continue;}inQ=false;i++;continue;}if(ch===sep||ch==='\t'||ch===','){field+=' ';i++;continue;}if(ch==='\n'||ch==='\r'){field+=' ';i++;continue;}field+=ch;i++;continue;}if(ch==='"'){inQ=true;i++;continue;}if(ch===sep){row.push(field.trim());field='';i++;continue;}if(ch==='\n'||(ch==='\r'&&text[i+1]==='\n')){row.push(field.trim());field='';if(row.some(function(c){return c!=='';}))rows.push(row);row=[];if(ch==='\r')i++;i++;continue;}if(ch==='\r'){row.push(field.trim());field='';if(row.some(function(c){return c!=='';}))rows.push(row);row=[];i++;continue;}field+=ch;i++;}if(field||row.length){row.push(field.trim());if(row.some(function(c){return c!=='';}))rows.push(row);}return rows;}
+function dSep(s){return(s.match(/\t/g)||[]).length>=(s.match(/,/g)||[]).length?'\t':',';}
+function TN(r){if(!r)return 0;return parseFloat(r.replace(/[,，\s¥￥円%％]/g,'').replace(/^--?$/,'0'))||0;}
+function NU(url){try{var u=new URL(url.trim());var p=u.origin+u.pathname;if(p[p.length-1]!=='/')p+='/';return p;}catch(e){return url.trim();}}
+function dFile(buf){var a=new Uint8Array(buf.slice(0,4));if(a[0]===0xff&&a[1]===0xfe)return new TextDecoder('utf-16le').decode(buf);if(a[0]===0xfe&&a[1]===0xff)return new TextDecoder('utf-16be').decode(buf);var encs=['utf-8','shift-jis','euc-jp'];for(var i=0;i<encs.length;i++){try{return new TextDecoder(encs[i],{fatal:true}).decode(buf);}catch(e){}}return '';}
+function gKey(h){var k=h.trim().toLowerCase().replace(/\s+/g,'').replace(/[_\-（）()「」【】・　]/g,'');if(['url','最終url','finalurl','最終リンク先url','ランディングページ','ランディングページurl','ランディングページ最終url','リンク広告設定','lpurl'].indexOf(k)>=0)return'url';if(['表示回数','imp','impressions','インプレッション','インプレッション数','impr'].indexOf(k)>=0)return'imp';if(['クリック数','クリック','clicks','click','リンククリック'].indexOf(k)>=0)return'clicks';if(['費用','費用（円）','費用(円)','cost','spend','コスト','広告費','消化金額jpg','消化金額jpn','消化金額'].indexOf(k)>=0)return'cost';if(['コンバージョン数','cv数','cv','コンバージョン','conversions','conversion'].indexOf(k)>=0)return'cv';if(['キャンペーン','campaign','campaignname','キャンペーン名'].indexOf(k)>=0)return'campaign';if(['lp名','名前','name','広告グループ','adgroup','広告名'].indexOf(k)>=0)return'name';return null;}
+function fHdr(rows){for(var i=0;i<Math.min(rows.length,10);i++){if(rows[i].filter(function(c){return gKey(c)!==null;}).length>=2)return i;}return -1;}
+function DZO(e,m){e.preventDefault();var el=document.getElementById('dz'+m);if(el)el.className='dz over';}
+function DZL(m){var el=document.getElementById('dz'+m);if(el)el.className='dz';}
+function DZD(e,m){e.preventDefault();DZL(m);var f=e.dataTransfer.files[0];if(f)PF(f,m);}
+function FILE(e,m){var f=e.target.files[0];if(f)PF(f,m);}
+function PF(file,media){var r=new FileReader();r.onload=function(e){var text=dFile(e.target.result);if(!text){MSG(media,'er','読み込めませんでした');return;}if(media==='ga4'||media==='ses'){var parsed=parseGA4CSV(text);var lpCount=Object.keys(parsed).length;if(!lpCount){MSG(media,'er','データを認識できませんでした');return;}if(media==='ga4')GA4DATA=parsed;else SESSDATA=parsed;var dz=document.getElementById('dz'+media);var label=media==='ga4'?'GA4 CV数':'GA4 セッション数';if(dz){dz.className='dz loaded';dz.textContent='✓ '+file.name+'（'+lpCount+'LP）';}MSG(media,'ok',label+'読み込み完了（'+lpCount+'LP）');if(AR.length)RUN();return;}var sep=dSep(text.split('\n').slice(0,5).join('\n'));var all=parseCSV(text,sep);if(all.length<2){MSG(media,'er','データが少なすぎます');return;}var hi=fHdr(all);if(hi<0){MSG(media,'er','列名を認識できませんでした');return;}var hdr=all[hi];var km=hdr.map(gKey);var rows=all.slice(hi+1).map(function(cells){function get(k){var idx=km.indexOf(k);return idx>=0?(cells[idx]||''):'';}var ru=get('url');if(!ru||ru.toLowerCase()==='total')return null;return{url:NU(ru),name:get('name'),campaign:get('campaign'),imp:TN(get('imp')),clicks:TN(get('clicks')),cost:TN(get('cost')),cv:TN(get('cv')),media:media};}).filter(function(d){return d&&d.url&&(d.imp||d.clicks||d.cost);});if(!rows.length){MSG(media,'er','有効なデータ行がありませんでした');return;}ST[media]=rows;var dz=document.getElementById('dz'+media);if(dz){dz.className='dz loaded';dz.textContent='✓ '+file.name+'（'+rows.length+'行）';}MSG(media,'ok',file.name+'（'+rows.length+'行）');};r.readAsArrayBuffer(file);}
+function MSG(m,t,txt){var el=document.getElementById('m'+m);if(el)el.innerHTML='<div class="'+(t==='er'?'er':'ok')+'">'+txt+'</div>';}
+function RESET(){['g','y','yd'].forEach(function(m){ST[m]=null;var dz=document.getElementById('dz'+m);if(dz){dz.className='dz';dz.textContent='クリックまたはD&D';}var mg=document.getElementById('m'+m);if(mg)mg.innerHTML='';var fi=document.getElementById('fi'+m);if(fi)fi.value='';});ST.m=null;AR=[];GA4DATA={};SESSDATA={};TABLEROWS=[];TABLE_HAS_CV=false;document.getElementById('mta').value='';document.getElementById('mm').innerHTML='';['ga4','ses'].forEach(function(m){var dz=document.getElementById('dz'+m);var msg=document.getElementById('m'+m);var fi=document.getElementById('fi'+m);if(dz){dz.className='dz';dz.textContent=m==='ga4'?'クリックまたはD&D（GA4 CV数CSV）':'クリックまたはD&D（GA4 セッション数CSV）';}if(msg)msg.innerHTML='';if(fi)fi.value='';});document.getElementById('res').style.display='none';document.getElementById('exbox').style.display='none';document.getElementById('gs-status').innerHTML='';}
+function RFTAGS(){document.getElementById('ftags').innerHTML=FP.map(function(p,i){return '<span class="ftag">'+p+'<button onclick="RMF('+i+')">x</button></span>';}).join('');}
+function ADDF(){var v=document.getElementById('fin').value.trim();if(v&&FP.indexOf(v)<0)FP.push(v);document.getElementById('fin').value='';RFTAGS();if(AR.length)RUN();}
+function RMF(i){FP.splice(i,1);RFTAGS();if(AR.length)RUN();}
+function CLRF(){FP=[];RFTAGS();if(AR.length)RUN();}
+function isExcl(row,media){var kws=EXKW[media]||[];if(!kws.length)return false;var cam=(row.campaign||'').toLowerCase(),nam=(row.name||'').toLowerCase();return kws.some(function(kw){return cam.indexOf(kw)>=0||nam.indexOf(kw)>=0;});}
+function sumR(rows){return rows.reduce(function(a,d){return{imp:a.imp+d.imp,clicks:a.clicks+d.clicks,cost:a.cost+d.cost,cv:a.cv+d.cv};},{imp:0,clicks:0,cost:0,cv:0});}
+function calcS(d,cvOvr,sessOvr){var cv=(cvOvr!==null&&cvOvr!==undefined)?cvOvr:d.cv;var sess=(sessOvr!==null&&sessOvr!==undefined)?sessOvr:null;var cvr=sess>0?(cv/sess*100):(d.clicks>0?cv/d.clicks*100:0);return{imp:d.imp,clicks:d.clicks,cost:d.cost,cv:cv,sess:sess,ctr:d.imp>0?d.clicks/d.imp*100:0,cvr:cvr,cpa:cv>0?d.cost/cv:0};}
+function F(v,t){if(v===null||v===undefined||isNaN(v))return'—';if(t==='p')return Math.floor(v*100)/100+'%';if(t==='y')return'¥'+Math.floor(v).toLocaleString();if(t==='n')return Math.floor(v).toLocaleString();return v;}
+function PS(url){try{return new URL(url).pathname;}catch(e){return url;}}
+var LBMAP={g:'<span class="ml mlg">Google</span>',y:'<span class="ml mly">Yahoo! サーチ</span>',yd:'<span class="ml mlyd">Yahoo! ディスプレイ</span>',m:'<span class="ml mlm">Meta</span>',t:'<span class="ml mlt">合計</span>',s:'<span class="ml mls">検索合計</span>',d:'<span class="ml mld">ディスプレイ合計</span>'};
+var LBTXT={g:'Google',y:'Yahoo! サーチ',yd:'Yahoo! ディスプレイ',m:'Meta',t:'合計',s:'検索合計',d:'ディスプレイ合計'};
+var ETMAP={g:'<span class="ml mle">Brand除く</span>',y:'<span class="ml mle">指名除く</span>'};
+var CLSMAP={g:'rg',ge:'rge',y:'ry',ye:'rye',yd:'ryd',m:'rm',t:'rt',te:'rte',s:'rs',d:'rd'};
+function RUN(){var any=ST.g||ST.y||ST.yd||ST.m;if(!any){alert('少なくとも1つのデータを読み込んでください');return;}AR=(ST.g||[]).concat(ST.y||[]).concat(ST.yd||[]).concat(ST.m||[]);var hasGA4=Object.keys(GA4DATA).length>0;var hasSess=Object.keys(SESSDATA).length>0;var hasCv=hasGA4||AR.some(function(d){return d.cv>0;});TABLE_HAS_CV=hasCv;var paths=FP.length>0?FP:[].concat(AR.map(function(d){return d.url;})).filter(function(v,i,a){return a.indexOf(v)===i;});var hm={g:!!ST.g,y:!!ST.y,yd:!!ST.yd,m:!!ST.m};var fr=[];for(var pi=0;pi<paths.length;pi++){var p=paths[pi];for(var ri=0;ri<AR.length;ri++){if(AR[ri].url.indexOf(p)>=0)fr.push(AR[ri]);}}var gtc=fr.reduce(function(s,d){return s+d.cost;},0);var body='';TABLEROWS=[];var cs=2+1+1+(hasSess?1:0)+1+1+(hasCv?1:0)+(hasCv?2:0);for(var pi=0;pi<paths.length;pi++){var p=paths[pi];var isSplit=p.indexOf(SPLIT)>=0;var ma=AR.filter(function(d){return d.url.indexOf(p)>=0;});if(pi>0)body+='<tr class="rsep"><td colspan="'+cs+'"></td></tr>';var lp=PS(ma.length>0?ma[0].url:p);var lc=ma.reduce(function(s,d){return s+d.cost;},0);var sv=gtc>0?lc/gtc*100:0;var sp=Math.floor(sv*10)/10;var bw=Math.min(Math.round(sv),100);var sb='<div class="cs"><span class="csb" style="width:'+bw+'px;max-width:60px;"></span>費用シェア '+sp+'%</div>';var rd=[];if(isSplit){if(hm.g){rd.push({t:'g',e:false});rd.push({t:'g',e:true});}if(hm.y){rd.push({t:'y',e:false});rd.push({t:'y',e:true});}if(hm.yd)rd.push({t:'yd',e:false});if(hm.m)rd.push({t:'m',e:false});rd.push({t:'tot',e:false});rd.push({t:'tot',e:true});}else{if(hm.g)rd.push({t:'g',e:false});if(hm.y)rd.push({t:'y',e:false});if(hm.yd)rd.push({t:'yd',e:false});if(hm.m)rd.push({t:'m',e:false});rd.push({t:'tot',e:false});}if(hm.g||hm.y)rd.push({t:'search',e:false});if(hm.yd||hm.m)rd.push({t:'disp',e:false});for(var ri=0;ri<rd.length;ri++){var def=rd[ri];var mt=def.t;var ex=def.e;var isTotal=(mt==='tot');var isSearch=(mt==='search');var isDisp=(mt==='disp');var rawRows;if(isTotal){rawRows=ma;if(ex)rawRows=rawRows.filter(function(d){return !isExcl(d,d.media);});}else if(isSearch){rawRows=ma.filter(function(d){return d.media==='g'||d.media==='y';});}else if(isDisp){rawRows=ma.filter(function(d){return d.media==='yd'||d.media==='m';});}else{rawRows=ma.filter(function(d){return d.media===mt;});if(ex)rawRows=rawRows.filter(function(d){return !isExcl(d,mt);});}var nd=!isTotal&&!isSearch&&!isDisp&&rawRows.length===0&&ma.filter(function(d){return d.media===mt;}).length===0;var base=sumR(rawRows);var meds=isTotal?['g','y','yd','m']:isSearch?['g','y']:isDisp?['yd','m']:[mt];var cvVal=null;var sessVal=null;if(hasGA4&&!nd){cvVal=0;for(var mi=0;mi<meds.length;mi++){var v=getCV(p,meds[mi]);if(v!==null)cvVal+=v;}}if(hasSess&&!nd){sessVal=0;for(var mi2=0;mi2<meds.length;mi2++){var v2=getSess(p,meds[mi2]);if(v2!==null)sessVal+=v2;}}var s=calcS(base,cvVal,sessVal);var clsKey=isTotal?(ex?'te':'t'):isSearch?'s':isDisp?'d':(ex?(mt+'e'):mt);var cls=CLSMAP[clsKey]||'rt';var lbKey=isTotal?'t':isSearch?'s':isDisp?'d':mt;var lb=LBMAP[lbKey]||'';var lbtxt=LBTXT[lbKey]||lbKey;if(ex&&!isTotal&&!isSearch&&!isDisp){lb+=ETMAP[mt]||'';lbtxt+=(mt==='g'?' Brand除く':' 指名除く');}if(ex&&isTotal){var el2=[];if(hm.g)el2.push('Brand');if(hm.y)el2.push('指名');lb+='<span class="ml mle">'+el2.join('・')+'除く</span>';lbtxt+=' '+el2.join('・')+'除く';}var ltd=ri===0?'<td class="tdl" rowspan="'+rd.length+'" style="vertical-align:middle;font-weight:500;font-size:12px;border-right:1px solid #dde6ec;">'+lp+sb+'</td>':'';var showCV=!nd&&s.cv!==null&&s.cv!==undefined;var showSess=!nd&&s.sess!==null&&s.sess!==undefined;TABLEROWS.push({type:'data',lp:lp,media:lbtxt,imp:nd?null:Math.floor(s.imp),clicks:nd?null:Math.floor(s.clicks),sess:showSess?Math.floor(s.sess):null,ctr:nd?null:Math.floor(s.ctr*100)/100+'%',cost:nd?null:Math.floor(s.cost),cv:showCV?Math.floor(s.cv):null,cvr:(showCV&&(s.sess>0||s.clicks>0))?Math.floor(s.cvr*100)/100+'%':null,cpa:showCV&&s.cv>0?Math.floor(s.cpa):null});body+='<tr class="'+cls+'">'+ltd+'<td class="tdl" style="white-space:nowrap;">'+lb+(nd?'<span class="nd">データなし</span>':'')+'</td>';body+='<td>'+(nd?'—':F(s.imp,'n'))+'</td><td>'+(nd?'—':F(s.clicks,'n'))+'</td>';if(hasSess)body+='<td>'+(showSess?F(s.sess,'n'):'—')+'</td>';body+='<td>'+(nd?'—':F(s.ctr,'p'))+'</td><td>'+(nd?'—':F(s.cost,'y'))+'</td>';if(hasCv)body+='<td>'+(showCV?F(s.cv,'n'):'—')+'</td>';if(hasCv)body+='<td>'+(showCV&&(s.sess>0||s.clicks>0)?F(s.cvr,'p')+'<span style="font-size:9px;color:#999;margin-left:3px;">'+(s.sess>0?'sess':'clk')+'</span>':'—')+'</td>';if(hasCv)body+='<td>'+(showCV&&s.cv>0?F(s.cpa,'y'):'—')+'</td>';body+='</tr>';}TABLEROWS.push({type:'sep'});}
+function mSumFR(mediasArr,excl){var r=fr.filter(function(d){return mediasArr.indexOf(d.media)>=0;});if(excl)r=r.filter(function(d){return !isExcl(d,d.media);});var base=sumR(r);var cvVal=null;var sessVal=null;if(hasGA4){cvVal=0;for(var pi2=0;pi2<paths.length;pi2++){for(var mi2=0;mi2<mediasArr.length;mi2++){var v=getCV(paths[pi2],mediasArr[mi2]);if(v!==null)cvVal+=v;}}}if(hasSess){sessVal=0;for(var pi3=0;pi3<paths.length;pi3++){for(var mi3=0;mi3<mediasArr.length;mi3++){var v2=getSess(paths[pi3],mediasArr[mi3]);if(v2!==null)sessVal+=v2;}}}return calcS(base,cvVal,sessVal);}
+function fR(cls,lbl,lblTxt,s){var showCV=s.cv!==null&&s.cv!==undefined;var showSess=s.sess!==null&&s.sess!==undefined;TABLEROWS.push({type:'footer',lp:'',media:lblTxt,imp:Math.floor(s.imp),clicks:Math.floor(s.clicks),sess:showSess?Math.floor(s.sess):null,ctr:Math.floor(s.ctr*100)/100+'%',cost:Math.floor(s.cost),cv:showCV?Math.floor(s.cv):null,cvr:showCV&&(s.sess>0||s.clicks>0)?Math.floor(s.cvr*100)/100+'%':null,cpa:showCV&&s.cv>0?Math.floor(s.cpa):null});var h='<tr class="'+cls+'"><td class="tdl" colspan="2" style="text-align:left;font-size:11px;">'+lbl+'</td>';h+='<td>'+F(s.imp,'n')+'</td><td>'+F(s.clicks,'n')+'</td>';if(hasSess)h+='<td>'+(showSess?F(s.sess,'n'):'—')+'</td>';h+='<td>'+F(s.ctr,'p')+'</td><td>'+F(s.cost,'y')+'</td>';if(hasCv)h+='<td>'+(showCV?F(s.cv,'n'):'—')+'</td>';if(hasCv)h+='<td>'+(showCV&&(s.sess>0||s.clicks>0)?F(s.cvr,'p')+'<span style="font-size:9px;color:#ccc;margin-left:3px;">'+(s.sess>0?'sess':'clk')+'</span>':'—')+'</td>';if(hasCv)h+='<td>'+(showCV&&s.cv>0?F(s.cpa,'y'):'—')+'</td>';return h+'</tr>';}
+var G=LBMAP.g,Y=LBMAP.y,YD=LBMAP.yd,M=LBMAP.m,T=LBMAP.t;var EG=ETMAP.g,EY=ETMAP.y;var el2=[];if(hm.g)el2.push('Brand');if(hm.y)el2.push('指名');var EL=el2.length?'<span class="ml mle">'+el2.join('・')+'除く</span>':'';var foot='<tfoot>';TABLEROWS.push({type:'sep'});if(hm.g){foot+=fR('fg',G+' 合計（全キャンペーン）','Google 合計（全）',mSumFR(['g'],false));foot+=fR('fg',G+EG+' 合計','Google Brand除く合計',mSumFR(['g'],true));}if(hm.y){foot+=fR('fy',Y+' 合計（全キャンペーン）','Yahoo! サーチ 合計（全）',mSumFR(['y'],false));foot+=fR('fy',Y+EY+' 合計','Yahoo! サーチ 指名除く合計',mSumFR(['y'],true));}if(hm.yd)foot+=fR('fyd',YD+' 合計','Yahoo! ディスプレイ 合計',mSumFR(['yd'],false));if(hm.m)foot+=fR('fm',M+' 合計','Meta 合計',mSumFR(['m'],false));foot+='<tr class="fsep"><td colspan="'+cs+'"></td></tr>';TABLEROWS.push({type:'sep'});foot+=fR('fa',T+' 全媒体合計（全キャンペーン）','全媒体合計（全）',mSumFR(['g','y','yd','m'],false));foot+=fR('fae',T+EL+' 全媒体合計','全媒体合計（Brand・指名除く）',mSumFR(['g','y','yd','m'],true));foot+='</tfoot>';var hdr='<th class="thl">LP</th><th class="thl">媒体</th><th>表示回数</th><th>クリック数</th>';if(hasSess)hdr+='<th>セッション数</th>';hdr+='<th>クリック率</th><th>費用</th>';if(hasCv)hdr+='<th>CV数</th><th>CV率</th><th>CPA</th>';document.getElementById('res').innerHTML='<div class="divider"></div><div class="tw"><table><thead><tr>'+hdr+'</tr></thead><tbody>'+body+'</tbody>'+foot+'</table></div>';document.getElementById('res').style.display='block';document.getElementById('exbox').style.display='block';document.getElementById('gs-status').innerHTML='';document.getElementById('res').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function buildFullTableTSV(){var hasSess=Object.keys(SESSDATA).length>0;var hdr=['LP','媒体','表示回数','クリック数'];if(hasSess)hdr.push('セッション数');hdr.push('クリック率','費用');if(TABLE_HAS_CV)hdr.push('CV数','CV率','CPA');var lines=[hdr.join('\t')];for(var i=0;i<TABLEROWS.length;i++){var r=TABLEROWS[i];if(r.type==='sep'){lines.push('');continue;}var row=[r.lp||'',r.media||'',r.imp!==null?r.imp:'',r.clicks!==null?r.clicks:''];if(hasSess)row.push(r.sess!==null?r.sess:'');row.push(r.ctr||'',r.cost!==null?r.cost:'');if(TABLE_HAS_CV)row.push(r.cv!==null?r.cv:'',r.cvr||'',r.cpa!==null?r.cpa:'');lines.push(row.join('\t'));}return lines.join('\n');}
+function buildFullTableCSV(){return buildFullTableTSV().split('\n').map(function(line){return line.split('\t').map(function(cell){return String(cell).indexOf(',')>=0?'"'+cell+'"':cell;}).join(',');}).join('\n');}
+function copyFullTable(){if(!TABLEROWS.length){alert('先に分析するを実行してください');return;}var tsv=buildFullTableTSV();var btn=document.getElementById('btn-table-copy');var done=function(){btn.classList.add('copied');btn.textContent='コピーしました';setTimeout(function(){btn.classList.remove('copied');btn.textContent='テーブル全体をコピー';},2000);};if(navigator.clipboard){navigator.clipboard.writeText(tsv).then(done).catch(function(){fb(tsv);done();});}else{fb(tsv);done();}}
+async function saveToSheets(){if(!TABLEROWS.length){alert('先に分析するを実行してください');return;}var btn=document.getElementById('btn-gs');var status=document.getElementById('gs-status');btn.className='btne gs loading';btn.textContent='保存中...';status.innerHTML='';var now=new Date();var title='LP広告レポート_'+now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';var csv=buildFullTableCSV();try{var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:'以下のCSVを「'+title+'」という名前でGoogle Driveにスプレッドシートとして保存してください。\n\n'+csv}],mcp_servers:[{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'google-drive'}]})});var data=await res.json();var fullText='';for(var i=0;i<data.content.length;i++){if(data.content[i].type==='text')fullText+=data.content[i].text;if(data.content[i].type==='mcp_tool_result'){try{var rd=JSON.parse(data.content[i].content[0].text);if(rd&&rd.id)fullText+='FILE_ID:'+rd.id;}catch(e){if(data.content[i].content&&data.content[i].content[0])fullText+=data.content[i].content[0].text;}}}var idMatch=fullText.match(/FILE_ID:([a-zA-Z0-9_-]+)/)||fullText.match(/"id"\s*:\s*"([a-zA-Z0-9_-]+)"/)||fullText.match(/\/d\/([a-zA-Z0-9_-]+)/);if(idMatch){var fileUrl='https://docs.google.com/spreadsheets/d/'+idMatch[1]+'/edit';status.innerHTML='<a class="gs-link" href="'+fileUrl+'" target="_blank">Google Sheetsを開く</a>';}else{status.innerHTML='<span style="font-size:11px;color:#3B6D11;">保存完了（Google Driveを確認してください）</span>';}btn.className='btne gs';btn.textContent='Google Sheetsに保存';}catch(e){btn.className='btne gs';btn.textContent='Google Sheetsに保存';status.innerHTML='<span style="font-size:11px;color:#A32D2D;">エラーが発生しました</span>';}}
+function buildExportData(){var ps=FP.length>0?FP:[].concat(AR.map(function(d){return d.url;})).filter(function(v,i,a){return a.indexOf(v)===i;});var items=[];for(var i=0;i<ps.length;i++){var p=ps[i];var matched=AR.filter(function(d){return d.url.indexOf(p)>=0;});var isSplit=p.indexOf(SPLIT)>=0;var src=isSplit?matched.filter(function(d){return !isExcl(d,d.media);}):matched;var s=sumR(src);var url=matched.length>0?matched[0].url:p;items.push({url:url,imp:Math.floor(s.imp)||0,clicks:Math.floor(s.clicks)||0,ctr:s.imp>0?Math.floor(s.clicks/s.imp*10000)/100+'%':'0%',cost:Math.floor(s.cost)||0});}items.sort(function(a,b){return b.clicks-a.clicks;});return items;}
+function bTSV(){return buildExportData().map(function(r){return[r.url,r.imp,r.clicks,r.ctr,r.cost].join('\t');}).join('\n');}
+function bCSV(){return bTSV().split('\n').map(function(line){return line.split('\t').map(function(cell){return String(cell).indexOf(',')>=0?'"'+cell+'"':cell;}).join(',');}).join('\n');}
+function COPY(){var tsv=bTSV();var btn=document.getElementById('bcopy');var done=function(){btn.classList.add('copied');btn.textContent='コピーしました';setTimeout(function(){btn.classList.remove('copied');btn.textContent='クリップボードにコピー';},2000);};if(navigator.clipboard){navigator.clipboard.writeText(tsv).then(done).catch(function(){fb(tsv);done();});}else{fb(tsv);done();}}
+function fb(txt){var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);}
+function DLCSV(){var b=new Blob(['\uFEFF'+bCSV()],{type:'text/csv;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='lp_report.csv';a.click();}
+function DLTSV(){var b=new Blob(['\uFEFF'+bTSV()],{type:'text/tab-separated-values;charset=utf-8'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='lp_report.tsv';a.click();}
+RFTAGS();RML();
 </script>
 </body>
 </html>
